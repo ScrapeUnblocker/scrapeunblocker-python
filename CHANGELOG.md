@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.2
+
+- `serp()` now calls the canonical public `/serpApi` endpoint (was the internal `/serp` alias).
+
 ## 0.1.1
 
 - Docs: use a neutral `YOUR_API_KEY` placeholder in examples (keys are opaque, they do not carry a prefix).

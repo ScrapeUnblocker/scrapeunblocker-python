@@ -84,12 +84,12 @@ def test_parsed_data_flag_sent():
 
 @respx.mock
 def test_serp():
-    route = respx.post(f"{BASE}/serp").mock(
-        return_value=httpx.Response(200, json={"results": []})
+    route = respx.post(f"{BASE}/serpApi").mock(
+        return_value=httpx.Response(200, json={"organic": []})
     )
     with make_client() as su:
         out = su.serp("hello world", pages_to_check=2)
-    assert out == {"results": []}
+    assert out == {"organic": []}
     url = str(route.calls.last.request.url)
     assert "keyword=hello" in url
     assert "pages_to_check=2" in url

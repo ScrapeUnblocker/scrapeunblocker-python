@@ -231,7 +231,7 @@ class Client:
             captcha_pause: Seconds to pause if a captcha appears.
         """
         return self._post_json(
-            "/serp",
+            "/serpApi",
             keyword=keyword,
             proxy_country=proxy_country,
             pages_to_check=pages_to_check,

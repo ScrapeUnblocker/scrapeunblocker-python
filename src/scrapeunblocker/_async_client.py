@@ -184,7 +184,7 @@ class AsyncClient:
     ) -> Any:
         """Run a Google search and return the parsed SERP as JSON."""
         return await self._post_json(
-            "/serp",
+            "/serpApi",
             keyword=keyword,
             proxy_country=proxy_country,
             pages_to_check=pages_to_check,
