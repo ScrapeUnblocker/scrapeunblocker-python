@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "scrapeunblocker"
-version = "0.1.0"
+version = "0.1.1"
 description = "Official Python client for the ScrapeUnblocker web scraping API - JavaScript-rendered pages that bypass Cloudflare, DataDome, PerimeterX, Akamai and more."
 readme = "README.md"
 requires-python = ">=3.8"

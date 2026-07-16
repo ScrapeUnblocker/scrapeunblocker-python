@@ -48,7 +48,7 @@ class AsyncClient:
         >>> import asyncio
         >>> from scrapeunblocker import AsyncClient
         >>> async def main():
-        ...     async with AsyncClient(api_key="su_live_...") as su:
+        ...     async with AsyncClient(api_key="YOUR_API_KEY") as su:
         ...         html = await su.get_page_source("https://example.com")
         >>> asyncio.run(main())
     """

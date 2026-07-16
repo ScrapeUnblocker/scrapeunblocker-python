@@ -21,7 +21,7 @@ Requires Python 3.8+.
 ```python
 from scrapeunblocker import Client
 
-su = Client(api_key="su_live_...")   # or set the SCRAPEUNBLOCKER_KEY env var
+su = Client(api_key="YOUR_API_KEY")   # or set the SCRAPEUNBLOCKER_KEY env var
 
 # Rendered HTML for any URL
 html = su.get_page_source("https://example.com")
@@ -39,7 +39,7 @@ Get your API key at [app.scrapeunblocker.com](https://app.scrapeunblocker.com). 
 Pass the key directly, or set an environment variable and omit it:
 
 ```bash
-export SCRAPEUNBLOCKER_KEY="su_live_..."
+export SCRAPEUNBLOCKER_KEY="YOUR_API_KEY"
 ```
 
 ```python
@@ -114,7 +114,7 @@ import asyncio
 from scrapeunblocker import AsyncClient
 
 async def main():
-    async with AsyncClient(api_key="su_live_...") as su:
+    async with AsyncClient(api_key="YOUR_API_KEY") as su:
         html = await su.get_page_source("https://example.com")
 
 asyncio.run(main())

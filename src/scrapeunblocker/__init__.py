@@ -4,7 +4,7 @@ Basic usage::
 
     from scrapeunblocker import Client
 
-    su = Client(api_key="su_live_...")          # or set SCRAPEUNBLOCKER_KEY
+    su = Client(api_key="YOUR_API_KEY")          # or set SCRAPEUNBLOCKER_KEY
     html = su.get_page_source("https://example.com")
     product = su.get_parsed("https://www.amazon.com/dp/B08N5WRWNW")
 

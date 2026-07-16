@@ -53,7 +53,7 @@ class Client:
 
     Example:
         >>> from scrapeunblocker import Client
-        >>> su = Client(api_key="su_live_...")
+        >>> su = Client(api_key="YOUR_API_KEY")
         >>> html = su.get_page_source("https://example.com")
     """
 
