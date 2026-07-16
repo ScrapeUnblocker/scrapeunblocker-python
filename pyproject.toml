@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "scrapeunblocker"
-version = "0.1.2"
-description = "Official Python client for the ScrapeUnblocker web scraping API - JavaScript-rendered pages that bypass Cloudflare, DataDome, PerimeterX, Akamai and more."
+version = "0.1.3"
+description = "Official Python client for the ScrapeUnblocker web scraping API - JS-rendered pages that bypass Cloudflare, DataDome, PerimeterX and Akamai, plus Google SERP and Skyscanner flights/hotels/car-hire scraping as JSON."
 readme = "README.md"
 requires-python = ">=3.8"
 license = "MIT"
@@ -19,6 +19,18 @@ keywords = [
     "datadome",
     "captcha",
     "crawler",
+    "scraper",
+    "skyscanner",
+    "skyscanner scrape",
+    "skyscanner scrape api",
+    "skyscanner scraper",
+    "skyscanner api",
+    "scrape skyscanner",
+    "flights api",
+    "hotels api",
+    "car hire",
+    "travel data",
+    "serp api",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",

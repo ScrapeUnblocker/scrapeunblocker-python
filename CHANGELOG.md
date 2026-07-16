@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.3
+
+- Metadata: expanded keywords and summary (Skyscanner flights/hotels/car hire, Google SERP) so the package is discoverable for those searches. No code changes.
+
 ## 0.1.2
 
 - `serp()` now calls the canonical public `/serpApi` endpoint (was the internal `/serp` alias).
