@@ -239,6 +239,34 @@ class Client:
             captcha_pause=captcha_pause or None,
         )
 
+    def google_local(
+        self,
+        keyword: str,
+        *,
+        proxy_country: Optional[str] = None,
+        hl: Optional[str] = None,
+        gl: Optional[str] = None,
+    ) -> Any:
+        """Search Google Local (Maps) and return the businesses as JSON.
+
+        Returns up to ~20 businesses, each with name, rating, reviews, price,
+        category, address, hours and a top review snippet.
+
+        Args:
+            keyword: The search phrase, e.g. "coffee shops in chicago".
+            proxy_country: Exit-IP country (ISO-2). Local results are
+                location-sensitive, so set the market you want.
+            gl: Google country of search (ISO-2 lowercase, e.g. "us").
+            hl: Google UI language (e.g. "en", "de").
+        """
+        return self._post_json(
+            "/maps/google-local",
+            keyword=keyword,
+            proxy_country=proxy_country,
+            hl=hl,
+            gl=gl,
+        )
+
     def get_image(
         self, url: str, *, proxy_country: Optional[str] = None
     ) -> bytes:

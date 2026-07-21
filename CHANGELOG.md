@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.4
+
+- Added `google_local(keyword, ...)` (sync and async) for the new Google Local (Maps) plugin (`POST /maps/google-local`) - returns local business listings (name, rating, reviews, price, category, address, hours) as JSON.
+
 ## 0.1.3
 
 - Metadata: expanded keywords and summary (Skyscanner flights/hotels/car hire, Google SERP) so the package is discoverable for those searches. No code changes.

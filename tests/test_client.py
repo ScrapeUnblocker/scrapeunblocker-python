@@ -96,6 +96,20 @@ def test_serp():
 
 
 @respx.mock
+def test_google_local():
+    route = respx.post(f"{BASE}/maps/google-local").mock(
+        return_value=httpx.Response(200, json={"results": []})
+    )
+    with make_client() as su:
+        out = su.google_local("coffee shops in chicago", proxy_country="US", gl="us")
+    assert out == {"results": []}
+    url = str(route.calls.last.request.url)
+    assert "keyword=coffee" in url
+    assert "proxy_country=US" in url
+    assert "gl=us" in url
+
+
+@respx.mock
 def test_get_image_returns_bytes():
     respx.post(f"{BASE}/getImage").mock(
         return_value=httpx.Response(200, content=b"\x89PNG")
