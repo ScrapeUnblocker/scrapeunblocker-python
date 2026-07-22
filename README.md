@@ -86,6 +86,15 @@ for biz in local["results"]:
     print(biz["name"], biz["rating"], biz["reviews"], biz["address"])
 ```
 
+## Oopbuy product search
+
+```python
+# Search Oopbuy sourcing channels (1688, Taobao, official)
+goods = su.oopbuy_search("wireless earbuds", channel="1688", sort="best_selling")
+for item in goods["results"]:
+    print(item["title"], item["price"], item["monthSold"], item["url"])
+```
+
 ## Cookies and the serving proxy
 
 ```python

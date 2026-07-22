@@ -267,6 +267,41 @@ class Client:
             gl=gl,
         )
 
+    def oopbuy_search(
+        self,
+        keyword: str,
+        *,
+        channel: str = "1688",
+        page: int = 1,
+        page_size: int = 20,
+        sort: str = "default",
+        proxy_country: Optional[str] = None,
+    ) -> Any:
+        """Search Oopbuy goods and return the products as JSON.
+
+        Returns products from the selected sourcing channel, each with SPU,
+        title (English and Chinese), price, monthly sales, image and URL.
+
+        Args:
+            keyword: The search phrase, e.g. "wireless earbuds".
+            channel: Sourcing channel: ``"1688"``, ``"taobao"`` or
+                ``"official"``.
+            page: Result page number (1-based).
+            page_size: Products per page (max 60).
+            sort: Ordering: ``"default"``, ``"price_asc"``, ``"price_desc"``
+                or ``"best_selling"``.
+            proxy_country: Exit-IP country (ISO-2).
+        """
+        return self._post_json(
+            "/goods/oopbuy-search",
+            keyword=keyword,
+            channel=channel,
+            page=page,
+            page_size=page_size,
+            sort=sort,
+            proxy_country=proxy_country,
+        )
+
     def get_image(
         self, url: str, *, proxy_country: Optional[str] = None
     ) -> bytes:

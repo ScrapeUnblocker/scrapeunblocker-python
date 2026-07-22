@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.5 (2026-07-22)
+
+- Added `oopbuy_search(keyword, ...)` (sync and async) for the new Oopbuy product search plugin (`POST /goods/oopbuy-search`) - searches the 1688, Taobao or official channel and returns products (SPU, title, price, monthly sales, image, URL) as JSON.
+
 ## 0.1.4
 
 - Added `google_local(keyword, ...)` (sync and async) for the new Google Local (Maps) plugin (`POST /maps/google-local`) - returns local business listings (name, rating, reviews, price, category, address, hours) as JSON.

@@ -209,6 +209,27 @@ class AsyncClient:
             gl=gl,
         )
 
+    async def oopbuy_search(
+        self,
+        keyword: str,
+        *,
+        channel: str = "1688",
+        page: int = 1,
+        page_size: int = 20,
+        sort: str = "default",
+        proxy_country: Optional[str] = None,
+    ) -> Any:
+        """Search Oopbuy goods and return the products as JSON."""
+        return await self._post_json(
+            "/goods/oopbuy-search",
+            keyword=keyword,
+            channel=channel,
+            page=page,
+            page_size=page_size,
+            sort=sort,
+            proxy_country=proxy_country,
+        )
+
     async def get_image(
         self, url: str, *, proxy_country: Optional[str] = None
     ) -> bytes:

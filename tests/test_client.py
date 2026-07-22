@@ -110,6 +110,23 @@ def test_google_local():
 
 
 @respx.mock
+def test_oopbuy_search():
+    route = respx.post(f"{BASE}/goods/oopbuy-search").mock(
+        return_value=httpx.Response(200, json={"results": []})
+    )
+    with make_client() as su:
+        out = su.oopbuy_search("wireless earbuds", channel="taobao", sort="price_asc")
+    assert out == {"results": []}
+    url = str(route.calls.last.request.url)
+    assert "keyword=wireless" in url
+    assert "channel=taobao" in url
+    assert "page=1" in url
+    assert "page_size=20" in url
+    assert "sort=price_asc" in url
+    assert "proxy_country" not in url
+
+
+@respx.mock
 def test_get_image_returns_bytes():
     respx.post(f"{BASE}/getImage").mock(
         return_value=httpx.Response(200, content=b"\x89PNG")
