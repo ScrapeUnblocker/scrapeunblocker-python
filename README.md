@@ -143,13 +143,21 @@ asyncio.run(main())
 Non-2xx responses raise typed exceptions, all subclasses of `ScrapeUnblockerError`:
 
 ```python
-from scrapeunblocker import Client, BlockedError, RateLimitError, UpstreamOutageError
+from scrapeunblocker import (
+    Client,
+    BlockedError,
+    PaymentRequiredError,
+    RateLimitError,
+    UpstreamOutageError,
+)
 
 su = Client()
 try:
     html = su.get_page_source("https://example.com")
 except BlockedError:
     ...   # 403: the target blocked every bypass path (not billed)
+except PaymentRequiredError:
+    ...   # 402: quota, credit limit, or a failed payment - fix billing
 except RateLimitError:
     ...   # 429: slow down
 except UpstreamOutageError:
@@ -158,16 +166,54 @@ except UpstreamOutageError:
 
 | Exception | Status | Meaning |
 |---|---|---|
-| `InvalidRequestError` | 400 | Bad URL or unsupported scheme |
-| `AuthenticationError` | 401 | Missing or invalid API key |
+| `InvalidRequestError` | 400 | Bad URL, unsupported scheme, or the API key header was not sent |
+| `AuthenticationError` | 401 | Key not recognised - typo, stray whitespace, or a rotated key |
+| `NoSubscriptionError` | 401 | Key is fine, but the account has no active plan |
+| `PaymentRequiredError` | 402 | Billing block - base class for the three below |
+| `QuotaExceededError` | 402 | The plan's requests for this period are used up |
+| `CreditLimitExceededError` | 402 | Unpaid balance is past the account's credit limit |
+| `PaymentFailedError` | 402 | A card payment was declined three times |
 | `BlockedError` | 403 | Blocked by bot protection on every path |
+| `NotFoundError` | 404 | Page loaded but held no image (`get_image` only) |
+| `BrowserTimeoutError` | 408 | Our browser run timed out before the page was ready |
+| `UnsupportedContentError` | 415 | The URL serves something other than HTML |
+| `ValidationError` | 422 | Missing or wrong-typed parameter; `body` holds the `detail` array |
 | `RateLimitError` | 429 | Too many requests |
 | `UpstreamOutageError` | 503 | The target origin is down |
-| `ServerError` | 5xx | Unexpected server error |
-| `ScrapeTimeoutError` | - | Request exceeded the timeout |
+| `ServerError` | 5xx | Unexpected server error, including a 504 upstream timeout |
+| `ScrapeTimeoutError` | - | This client gave up locally before the API answered |
 | `ConnectionError` | - | Could not reach the API |
 
-Transient failures (429, 502, 503, 504 and network errors) are retried automatically with exponential backoff; tune with `Client(max_retries=...)`.
+Every one of these subclasses `ScrapeUnblockerError`, so a single `except ScrapeUnblockerError` still catches everything, and the 402 and 401 subclasses can be caught by their base class when you do not need to tell them apart.
+
+Transient failures (429, 502, 503, 504 and network errors) are retried automatically with exponential backoff; tune with `Client(max_retries=...)`. A 401 or 402 is never retried - it clears when the key or the billing state changes, not on another attempt. Neither is billed or counted against your quota, because the request is refused before anything is scraped.
+
+### Billing errors (402)
+
+The three billing blocks share a status code and differ only in their message, so the client raises a dedicated exception for each:
+
+```python
+from scrapeunblocker import (
+    Client,
+    CreditLimitExceededError,
+    PaymentFailedError,
+    QuotaExceededError,
+)
+
+su = Client()
+try:
+    html = su.get_page_source("https://example.com")
+except QuotaExceededError:
+    ...   # plan quota (plus any overage allowance) is used up for this period
+except CreditLimitExceededError:
+    ...   # unpaid balance passed the account credit limit
+except PaymentFailedError:
+    ...   # card declined three times - update the payment method
+```
+
+When more than one applies, the most serious wins: failed payment outranks credit limit, which outranks quota. All three lift by themselves once the billing state changes - access returns within about a minute, and the API key stays the same. One catch worth knowing: subscribing to a new plan does **not** clear `PaymentFailedError`, because the old unpaid invoice stays open until it is paid.
+
+Full details for every status code: [developers.scrapeunblocker.com/errors](https://developers.scrapeunblocker.com/errors).
 
 ## Configuration
 

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.6 (2026-07-23)
+
+- Added `PaymentRequiredError` for HTTP 402, which previously surfaced as a bare `APIError` with no explanation. The three billing blocks now each get their own subclass, picked from the response body: `QuotaExceededError` (`Quota exceeded`), `CreditLimitExceededError` (`Credit limit exceeded`) and `PaymentFailedError` (`Payment failed - update payment method`). Catch `PaymentRequiredError` to handle all three.
+- Added `NoSubscriptionError`, a subclass of `AuthenticationError`, for the 401 that means "the key is fine, the account has no active plan" (`No valid subscription`) as opposed to an unrecognised key.
+- Added typed exceptions for the remaining documented status codes: `NotFoundError` (404), `BrowserTimeoutError` (408), `UnsupportedContentError` (415) and `ValidationError` (422). All previously raised a bare `APIError`.
+- Error messages now describe every documented status code accurately - notably 400, which also covers a missing `x-scrapeunblocker-key` header, not just a bad URL.
+- Documented the full exception hierarchy in the README, including which errors are retried, which are billed, and how each 402 clears.
+
+No breaking changes: every new class derives from `APIError`, so existing `except APIError` / `except ScrapeUnblockerError` handlers keep working unchanged.
+
 ## 0.1.5 (2026-07-22)
 
 - Added `oopbuy_search(keyword, ...)` (sync and async) for the new Oopbuy product search plugin (`POST /goods/oopbuy-search`) - searches the 1688, Taobao or official channel and returns products (SPU, title, price, monthly sales, image, URL) as JSON.

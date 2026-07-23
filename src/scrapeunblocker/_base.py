@@ -8,7 +8,7 @@ apart.
 from __future__ import annotations
 
 import os
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Type
 
 import httpx
 
@@ -16,11 +16,20 @@ from .exceptions import (
     APIError,
     AuthenticationError,
     BlockedError,
+    BrowserTimeoutError,
+    CreditLimitExceededError,
     InvalidRequestError,
+    NoSubscriptionError,
+    NotFoundError,
+    PaymentFailedError,
+    PaymentRequiredError,
+    QuotaExceededError,
     RateLimitError,
     ScrapeUnblockerError,
     ServerError,
+    UnsupportedContentError,
     UpstreamOutageError,
+    ValidationError,
 )
 
 DEFAULT_BASE_URL = "https://api.scrapeunblocker.com"
@@ -29,7 +38,8 @@ DEFAULT_MAX_RETRIES = 2
 API_KEY_HEADER = "x-scrapeunblocker-key"
 
 # Status codes worth retrying: transient upstream outage, rate limiting, and
-# generic 5xx. A 400/403 is deterministic - retrying only wastes time.
+# generic 5xx. A 400/401/402/403 is deterministic - retrying only wastes time,
+# and for 402 the block lifts on a billing change, not on another attempt.
 _RETRYABLE_STATUS = frozenset({429, 502, 503, 504})
 
 
@@ -74,9 +84,19 @@ def raise_for_status(response: httpx.Response) -> None:
     if status == 400:
         raise InvalidRequestError(message, status_code=status, body=body)
     if status == 401:
-        raise AuthenticationError(message, status_code=status, body=body)
+        raise _auth_error_class(body)(message, status_code=status, body=body)
+    if status == 402:
+        raise _billing_error_class(body)(message, status_code=status, body=body)
     if status == 403:
         raise BlockedError(message, status_code=status, body=body)
+    if status == 404:
+        raise NotFoundError(message, status_code=status, body=body)
+    if status == 408:
+        raise BrowserTimeoutError(message, status_code=status, body=body)
+    if status == 415:
+        raise UnsupportedContentError(message, status_code=status, body=body)
+    if status == 422:
+        raise ValidationError(message, status_code=status, body=body)
     if status == 429:
         raise RateLimitError(message, status_code=status, body=body)
     if status == 503:
@@ -86,16 +106,51 @@ def raise_for_status(response: httpx.Response) -> None:
     raise APIError(message, status_code=status, body=body)
 
 
+def _auth_error_class(body: Optional[str]) -> Type[AuthenticationError]:
+    """Pick the 401 subclass from the response body.
+
+    A 401 is either an unknown key or a recognised key on an account without a
+    plan. Only the body tells them apart; anything unrecognised stays on the
+    general AuthenticationError.
+    """
+    if "no valid subscription" in (body or "").lower():
+        return NoSubscriptionError
+    return AuthenticationError
+
+
+def _billing_error_class(body: Optional[str]) -> Type[PaymentRequiredError]:
+    """Pick the 402 subclass from the response body.
+
+    The three billing blocks share a status code and differ only in their
+    plain-text body. An unrecognised body falls back to the general
+    PaymentRequiredError rather than guessing.
+    """
+    text = (body or "").lower()
+    if "quota exceeded" in text:
+        return QuotaExceededError
+    if "credit limit exceeded" in text:
+        return CreditLimitExceededError
+    if "payment failed" in text:
+        return PaymentFailedError
+    return PaymentRequiredError
+
+
 def _message_for(status: int, body: Optional[str]) -> str:
     snippet = (body or "").strip().replace("\n", " ")
     if len(snippet) > 200:
         snippet = snippet[:200] + "..."
     base = {
-        400: "Invalid request (bad URL or unsupported scheme)",
-        401: "Authentication failed - check your API key",
+        400: "Invalid request (bad URL, unsupported scheme, or missing API key header)",
+        401: "Authentication failed - key not recognised, or account has no active plan",
+        402: "Billing block - quota exceeded, credit limit exceeded, or a failed payment",
         403: "Target blocked by bot protection on every bypass path",
+        404: "Requested element not found on the page",
+        408: "Browser run timed out before the page was ready",
+        415: "URL does not serve HTML",
+        422: "Validation error - see the detail array in the response body",
         429: "Rate limited - too many requests",
         503: "Upstream origin returned a server-side outage page",
+        504: "Fetch timed out upstream",
     }.get(status, f"API returned HTTP {status}")
     return f"{base}: {snippet}" if snippet else base
 

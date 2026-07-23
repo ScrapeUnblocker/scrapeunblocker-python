@@ -3,14 +3,25 @@ import pytest
 import respx
 
 from scrapeunblocker import (
+    APIError,
     AsyncClient,
+    AuthenticationError,
     BlockedError,
+    BrowserTimeoutError,
     Client,
+    CreditLimitExceededError,
     InvalidRequestError,
+    NoSubscriptionError,
+    NotFoundError,
     ParsedPage,
+    PaymentFailedError,
+    PaymentRequiredError,
+    QuotaExceededError,
     RateLimitError,
     ScrapeUnblockerError,
+    UnsupportedContentError,
     UpstreamOutageError,
+    ValidationError,
 )
 
 BASE = "https://api.scrapeunblocker.com"
@@ -152,9 +163,16 @@ def test_skyscanner_flights():
     "status,exc",
     [
         (400, InvalidRequestError),
+        (401, AuthenticationError),
+        (402, PaymentRequiredError),
         (403, BlockedError),
+        (404, NotFoundError),
+        (408, BrowserTimeoutError),
+        (415, UnsupportedContentError),
+        (422, ValidationError),
         (429, RateLimitError),
         (503, UpstreamOutageError),
+        (418, APIError),
     ],
 )
 def test_error_mapping(status, exc):
@@ -166,6 +184,56 @@ def test_error_mapping(status, exc):
         with pytest.raises(exc) as info:
             su.get_page_source("https://example.com")
     assert info.value.status_code == status
+
+
+@respx.mock
+@pytest.mark.parametrize(
+    "body,exc",
+    [
+        ("Quota exceeded\n", QuotaExceededError),
+        ("Credit limit exceeded\n", CreditLimitExceededError),
+        ("Payment failed - update payment method\n", PaymentFailedError),
+        ("something new we do not know yet", PaymentRequiredError),
+    ],
+)
+def test_billing_error_subclass_from_body(body, exc):
+    respx.post(f"{BASE}/getPageSource").mock(return_value=httpx.Response(402, text=body))
+    with make_client(max_retries=0) as su:
+        with pytest.raises(exc) as info:
+            su.get_page_source("https://example.com")
+    assert info.value.status_code == 402
+    assert isinstance(info.value, PaymentRequiredError)
+    assert info.value.body == body
+
+
+@respx.mock
+@pytest.mark.parametrize(
+    "body,exc",
+    [
+        ("No valid subscription\n", NoSubscriptionError),
+        ("Unauthorized\n", AuthenticationError),
+    ],
+)
+def test_auth_error_subclass_from_body(body, exc):
+    respx.post(f"{BASE}/getPageSource").mock(return_value=httpx.Response(401, text=body))
+    with make_client(max_retries=0) as su:
+        with pytest.raises(exc) as info:
+            su.get_page_source("https://example.com")
+    assert isinstance(info.value, AuthenticationError)
+    assert info.value.status_code == 401
+
+
+@respx.mock
+@pytest.mark.parametrize("status", [401, 402])
+def test_auth_and_billing_errors_are_not_retried(status):
+    # These clear when the key or billing state changes, never on a retry.
+    route = respx.post(f"{BASE}/getPageSource").mock(
+        return_value=httpx.Response(status, text="Quota exceeded")
+    )
+    with make_client(max_retries=3) as su:
+        with pytest.raises(ScrapeUnblockerError):
+            su.get_page_source("https://example.com")
+    assert route.call_count == 1
 
 
 @respx.mock
