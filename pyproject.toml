@@ -51,8 +51,8 @@ classifiers = [
 dependencies = ["httpx>=0.23"]
 
 [project.urls]
-Homepage = "https://scrapeunblocker.com"
-Documentation = "https://developers.scrapeunblocker.com"
+Homepage = "https://scrapeunblocker.com?utm_source=pypi&utm_medium=integration&utm_campaign=python-sdk"
+Documentation = "https://developers.scrapeunblocker.com?utm_source=pypi&utm_medium=integration&utm_campaign=python-sdk"
 Source = "https://github.com/ScrapeUnblocker/scrapeunblocker-python"
 Changelog = "https://github.com/ScrapeUnblocker/scrapeunblocker-python/blob/main/CHANGELOG.md"
 

@@ -1,6 +1,6 @@
 # ScrapeUnblocker Python client
 
-Official Python client for the [ScrapeUnblocker](https://scrapeunblocker.com) web scraping API.
+Official Python client for the [ScrapeUnblocker](https://scrapeunblocker.com?utm_source=pypi&utm_medium=integration&utm_campaign=python-sdk) web scraping API.
 
 Every request is fully JavaScript-rendered in a real browser and routed through premium proxies, so it bypasses Cloudflare, DataDome, PerimeterX, Akamai, Kasada and similar anti-bot systems - from one simple call. You are only billed for successful requests.
 
@@ -32,7 +32,7 @@ print(product.page_type)   # "product"
 print(product.data)        # {...}
 ```
 
-Get your API key at [app.scrapeunblocker.com](https://app.scrapeunblocker.com). The free trial does not require a credit card.
+Get your API key at [app.scrapeunblocker.com](https://app.scrapeunblocker.com?utm_source=pypi&utm_medium=integration&utm_campaign=python-sdk). The free trial does not require a credit card.
 
 ## Authentication
 
@@ -228,9 +228,9 @@ Client(
 
 ## Links
 
-- Documentation: https://developers.scrapeunblocker.com
-- Website: https://scrapeunblocker.com
-- Dashboard: https://app.scrapeunblocker.com
+- Documentation: [developers.scrapeunblocker.com](https://developers.scrapeunblocker.com?utm_source=pypi&utm_medium=integration&utm_campaign=python-sdk)
+- Website: [scrapeunblocker.com](https://scrapeunblocker.com?utm_source=pypi&utm_medium=integration&utm_campaign=python-sdk)
+- Dashboard: [app.scrapeunblocker.com](https://app.scrapeunblocker.com?utm_source=pypi&utm_medium=integration&utm_campaign=python-sdk)
 
 ## License
 
