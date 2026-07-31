@@ -95,6 +95,21 @@ for item in goods["results"]:
     print(item["title"], item["price"], item["monthSold"], item["url"])
 ```
 
+## eBay search
+
+```python
+# Listings from any regional eBay marketplace
+items = su.ebay_search("iphone 13", marketplace="ebay.com", condition="used")
+if items["exactMatches"]:
+    for item in items["results"]:
+        print(item["title"], item["price"], item["currency"], item["condition"])
+        print("  seller:", item["seller"]["username"], item["seller"]["feedbackPercent"])
+```
+
+`exactMatches` is `False` when eBay found nothing for the keyword and returned
+its own loosely-related suggestions instead, so check it before using the
+listings.
+
 ## Cookies and the serving proxy
 
 ```python

@@ -138,6 +138,34 @@ def test_oopbuy_search():
 
 
 @respx.mock
+def test_ebay_search():
+    route = respx.post(f"{BASE}/marketplace/ebay-search").mock(
+        return_value=httpx.Response(200, json={"results": [], "exactMatches": True})
+    )
+    with make_client() as su:
+        out = su.ebay_search(
+            "iphone 13",
+            marketplace="ebay.de",
+            condition="used",
+            sort="newly_listed",
+            min_price=100,
+            max_price=300,
+        )
+    assert out == {"results": [], "exactMatches": True}
+    url = str(route.calls.last.request.url)
+    assert "keyword=iphone" in url
+    assert "marketplace=ebay.de" in url
+    assert "condition=used" in url
+    assert "sort=newly_listed" in url
+    assert "min_price=100" in url
+    assert "max_price=300" in url
+    assert "page_size=60" in url
+    # Unset optional filters must not be sent at all.
+    assert "seller" not in url
+    assert "free_shipping" not in url
+
+
+@respx.mock
 def test_get_image_returns_bytes():
     respx.post(f"{BASE}/getImage").mock(
         return_value=httpx.Response(200, content=b"\x89PNG")

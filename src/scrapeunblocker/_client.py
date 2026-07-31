@@ -302,6 +302,67 @@ class Client:
             proxy_country=proxy_country,
         )
 
+    def ebay_search(
+        self,
+        keyword: str,
+        *,
+        marketplace: str = "ebay.com",
+        page: int = 1,
+        page_size: int = 60,
+        condition: Optional[str] = None,
+        sort: str = "best_match",
+        listing_type: str = "all",
+        min_price: Optional[float] = None,
+        max_price: Optional[float] = None,
+        free_shipping: bool = False,
+        seller: Optional[str] = None,
+        category: Optional[str] = None,
+        proxy_country: Optional[str] = None,
+    ) -> Any:
+        """Search eBay and return the listings as JSON.
+
+        Each listing carries title, numeric price and currency, condition,
+        seller username and feedback, shipping cost, sold/watcher/bid counts,
+        image and a clean item URL.
+
+        When eBay finds no exact match it still serves a page of loosely
+        related suggestions; the response then sets ``exactMatches`` to
+        ``False``, so check that field before using the listings.
+
+        Args:
+            keyword: The search phrase, e.g. "iphone 13".
+            marketplace: Regional eBay site, e.g. ``"ebay.com"``, ``"ebay.de"``.
+            page: Result page number (1-based).
+            page_size: Listings per page: 60, 120 or 240.
+            condition: ``"new"``, ``"open_box"``, ``"refurbished"``,
+                ``"used"`` or ``"for_parts"``.
+            sort: ``"best_match"``, ``"newly_listed"``, ``"ending_soon"``,
+                ``"price_asc"`` or ``"price_desc"``.
+            listing_type: ``"all"``, ``"buy_it_now"`` or ``"auction"``.
+            min_price: Lowest price to include, in the marketplace's currency.
+            max_price: Highest price to include, in the marketplace's currency.
+            free_shipping: Keep only listings eBay marks as free delivery.
+            seller: Restrict the search to one seller's username.
+            category: eBay category id to search inside, e.g. ``"131090"``.
+            proxy_country: Exit-IP country (ISO-2).
+        """
+        return self._post_json(
+            "/marketplace/ebay-search",
+            keyword=keyword,
+            marketplace=marketplace,
+            page=page,
+            page_size=page_size,
+            condition=condition,
+            sort=sort,
+            listing_type=listing_type,
+            min_price=min_price,
+            max_price=max_price,
+            free_shipping=free_shipping or None,
+            seller=seller,
+            category=category,
+            proxy_country=proxy_country,
+        )
+
     def get_image(
         self, url: str, *, proxy_country: Optional[str] = None
     ) -> bytes:

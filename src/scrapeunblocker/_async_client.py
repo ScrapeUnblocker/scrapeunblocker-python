@@ -230,6 +230,41 @@ class AsyncClient:
             proxy_country=proxy_country,
         )
 
+    async def ebay_search(
+        self,
+        keyword: str,
+        *,
+        marketplace: str = "ebay.com",
+        page: int = 1,
+        page_size: int = 60,
+        condition: Optional[str] = None,
+        sort: str = "best_match",
+        listing_type: str = "all",
+        min_price: Optional[float] = None,
+        max_price: Optional[float] = None,
+        free_shipping: bool = False,
+        seller: Optional[str] = None,
+        category: Optional[str] = None,
+        proxy_country: Optional[str] = None,
+    ) -> Any:
+        """Search eBay and return the listings as JSON."""
+        return await self._post_json(
+            "/marketplace/ebay-search",
+            keyword=keyword,
+            marketplace=marketplace,
+            page=page,
+            page_size=page_size,
+            condition=condition,
+            sort=sort,
+            listing_type=listing_type,
+            min_price=min_price,
+            max_price=max_price,
+            free_shipping=free_shipping or None,
+            seller=seller,
+            category=category,
+            proxy_country=proxy_country,
+        )
+
     async def get_image(
         self, url: str, *, proxy_country: Optional[str] = None
     ) -> bytes:
