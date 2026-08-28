@@ -106,6 +106,25 @@ if items["exactMatches"]:
         print("  seller:", item["seller"]["username"], item["seller"]["feedbackPercent"])
 ```
 
+## Amazon
+
+```python
+# One product by ASIN (or url="https://www.amazon.de/dp/B0BSHF7WHW")
+product = su.amazon_product(asin="B0BSHF7WHW", marketplace="amazon.com")
+print(product["title"], product["price"], product["currency"], product["rating"])
+
+# Keyword search - prices come back in the marketplace's currency
+results = su.amazon_search("wireless headphones", sort="price_asc")
+for item in results["results"]:
+    print(item["title"], item["price"], item["currency"], item["asin"])
+```
+
+Prices are returned in the marketplace's own currency: `proxy_country` defaults
+to the marketplace's home country (`amazon.com` -> US, `amazon.de` -> DE), so
+you do not have to configure the exit yourself.
+
+## eBay: exact matches
+
 `exactMatches` is `False` when eBay found nothing for the keyword and returned
 its own loosely-related suggestions instead, so check it before using the
 listings.

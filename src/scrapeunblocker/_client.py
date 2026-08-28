@@ -363,6 +363,81 @@ class Client:
             proxy_country=proxy_country,
         )
 
+    def amazon_product(
+        self,
+        *,
+        asin: Optional[str] = None,
+        url: Optional[str] = None,
+        marketplace: str = "amazon.com",
+        proxy_country: Optional[str] = None,
+    ) -> Any:
+        """Scrape one Amazon product by ASIN or URL and return it as JSON.
+
+        Returns title, brand, numeric price and currency, list price and
+        savings, availability, rating, review count, seller, feature bullets,
+        categories and images. Prices come back in the marketplace's own
+        currency: ``proxy_country`` defaults to the marketplace's home country
+        (amazon.com -> US) so the exit is pinned there over the ISP pool.
+
+        Args:
+            asin: 10-char product id, e.g. ``"B0BSHF7WHW"`` (books use their
+                ISBN-10). Pair with ``marketplace``.
+            url: Full product URL instead of ``asin``; the ASIN and marketplace
+                are read from it.
+            marketplace: Regional Amazon site, e.g. ``"amazon.com"``,
+                ``"amazon.de"``.
+            proxy_country: Exit-IP country (ISO-2). Defaults to the
+                marketplace's home country.
+        """
+        return self._post_json(
+            "/marketplace/amazon-product",
+            asin=asin,
+            url=url,
+            marketplace=marketplace,
+            proxy_country=proxy_country,
+        )
+
+    def amazon_search(
+        self,
+        keyword: str,
+        *,
+        marketplace: str = "amazon.com",
+        page: int = 1,
+        sort: str = "featured",
+        min_price: Optional[float] = None,
+        max_price: Optional[float] = None,
+        proxy_country: Optional[str] = None,
+    ) -> Any:
+        """Search Amazon and return the result cards as JSON.
+
+        Each card carries asin, title, numeric price and currency, list price,
+        rating, review count, a clean product URL, image and the sponsored /
+        prime flags. Fetch a card's full detail with :meth:`amazon_product`.
+        Prices are in the marketplace's own currency.
+
+        Args:
+            keyword: The search phrase, e.g. "wireless headphones".
+            marketplace: Regional Amazon site, e.g. ``"amazon.com"``,
+                ``"amazon.de"``.
+            page: Result page number (1-based).
+            sort: ``"featured"``, ``"price_asc"``, ``"price_desc"``,
+                ``"avg_review"`` or ``"newest"``.
+            min_price: Lowest price to include, in the marketplace's currency.
+            max_price: Highest price to include, in the marketplace's currency.
+            proxy_country: Exit-IP country (ISO-2). Defaults to the
+                marketplace's home country.
+        """
+        return self._post_json(
+            "/marketplace/amazon-search",
+            keyword=keyword,
+            marketplace=marketplace,
+            page=page,
+            sort=sort,
+            min_price=min_price,
+            max_price=max_price,
+            proxy_country=proxy_country,
+        )
+
     def get_image(
         self, url: str, *, proxy_country: Optional[str] = None
     ) -> bytes:

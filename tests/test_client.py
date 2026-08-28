@@ -166,6 +166,45 @@ def test_ebay_search():
 
 
 @respx.mock
+def test_amazon_product():
+    route = respx.post(f"{BASE}/marketplace/amazon-product").mock(
+        return_value=httpx.Response(200, json={"asin": "B0BSHF7WHW", "price": 49.99})
+    )
+    with make_client() as su:
+        out = su.amazon_product(asin="B0BSHF7WHW", marketplace="amazon.com")
+    assert out == {"asin": "B0BSHF7WHW", "price": 49.99}
+    url = str(route.calls.last.request.url)
+    assert "asin=B0BSHF7WHW" in url
+    assert "marketplace=amazon.com" in url
+    # Unset optional params must not be sent at all.
+    assert "url=" not in url
+    assert "proxy_country" not in url
+
+
+@respx.mock
+def test_amazon_search():
+    route = respx.post(f"{BASE}/marketplace/amazon-search").mock(
+        return_value=httpx.Response(200, json={"results": [], "resultsCollected": 0})
+    )
+    with make_client() as su:
+        out = su.amazon_search(
+            "wireless headphones",
+            marketplace="amazon.de",
+            sort="price_asc",
+            min_price=50,
+            max_price=200,
+        )
+    assert out == {"results": [], "resultsCollected": 0}
+    url = str(route.calls.last.request.url)
+    assert "keyword=wireless" in url
+    assert "marketplace=amazon.de" in url
+    assert "sort=price_asc" in url
+    assert "min_price=50" in url
+    assert "max_price=200" in url
+    assert "page=1" in url
+
+
+@respx.mock
 def test_get_image_returns_bytes():
     respx.post(f"{BASE}/getImage").mock(
         return_value=httpx.Response(200, content=b"\x89PNG")
