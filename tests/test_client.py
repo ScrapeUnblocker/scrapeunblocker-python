@@ -1,3 +1,6 @@
+import json
+from urllib.parse import parse_qs, urlparse
+
 import httpx
 import pytest
 import respx
@@ -19,6 +22,7 @@ from scrapeunblocker import (
     QuotaExceededError,
     RateLimitError,
     ScrapeUnblockerError,
+    StepFailedError,
     UnsupportedContentError,
     UpstreamOutageError,
     ValidationError,
@@ -67,6 +71,111 @@ def test_none_params_are_omitted():
     url = str(route.calls.last.request.url)
     assert "proxy_country" not in url
     assert "time_sleep" not in url
+
+
+@respx.mock
+def test_steps_are_json_encoded_into_query():
+    route = respx.post(f"{BASE}/getPageSource").mock(
+        return_value=httpx.Response(200, text="<html>done</html>")
+    )
+    steps = [
+        {"action": "click", "selector": "#more"},
+        {"action": "wait_for", "selector": ".results", "timeout_ms": 5000},
+    ]
+    with make_client() as su:
+        html = su.get_page_source("https://example.com", steps=steps)
+    assert html == "<html>done</html>"
+    query = parse_qs(urlparse(str(route.calls.last.request.url)).query)
+    # The steps list is sent as a single JSON-encoded query param.
+    assert json.loads(query["steps"][0]) == steps
+    assert "list_elements" not in query
+
+
+@respx.mock
+def test_list_elements_sends_flag_and_returns_json():
+    payload = {
+        "url": "https://example.com",
+        "count": 1,
+        "elements": [{"tag": "button", "selector": "#more", "text": "More"}],
+    }
+    route = respx.post(f"{BASE}/getPageSource").mock(
+        return_value=httpx.Response(200, json=payload)
+    )
+    with make_client() as su:
+        out = su.get_page_source("https://example.com", list_elements=True)
+    assert out == payload
+    url = str(route.calls.last.request.url)
+    assert "list_elements=true" in url
+
+
+@respx.mock
+def test_list_elements_false_omits_flag_and_returns_html():
+    route = respx.post(f"{BASE}/getPageSource").mock(
+        return_value=httpx.Response(200, text="<html>plain</html>")
+    )
+    with make_client() as su:
+        out = su.get_page_source("https://example.com")
+    assert out == "<html>plain</html>"
+    assert "list_elements" not in str(route.calls.last.request.url)
+
+
+@respx.mock
+def test_step_failure_raises_step_failed_error():
+    body = json.dumps(
+        {
+            "error": "step_failed",
+            "step_index": 1,
+            "action": "click",
+            "reason": "selector not found",
+            "selector": "#missing",
+            "html": "<html>partial</html>",
+        }
+    )
+    respx.post(f"{BASE}/getPageSource").mock(
+        return_value=httpx.Response(422, text=body)
+    )
+    steps = [{"action": "click", "selector": "#missing"}]
+    with make_client(max_retries=0) as su:
+        with pytest.raises(StepFailedError) as info:
+            su.get_page_source("https://example.com", steps=steps)
+    err = info.value
+    assert err.status_code == 422
+    assert err.step_index == 1
+    assert err.action == "click"
+    assert err.reason == "selector not found"
+    assert err.selector == "#missing"
+    assert err.html == "<html>partial</html>"
+    # StepFailedError is a ValidationError, so old handlers still catch it.
+    assert isinstance(err, ValidationError)
+
+
+@respx.mock
+def test_plain_422_still_raises_validation_error():
+    # A non-step_failed 422 (ordinary FastAPI validation) stays a ValidationError.
+    respx.post(f"{BASE}/getPageSource").mock(
+        return_value=httpx.Response(422, json={"detail": [{"msg": "field required"}]})
+    )
+    with make_client(max_retries=0) as su:
+        with pytest.raises(ValidationError) as info:
+            su.get_page_source("https://example.com")
+    assert not isinstance(info.value, StepFailedError)
+
+
+@respx.mock
+async def test_async_steps_and_list_elements():
+    payload = {"url": "https://example.com", "count": 0, "elements": []}
+    route = respx.post(f"{BASE}/getPageSource").mock(
+        return_value=httpx.Response(200, json=payload)
+    )
+    steps = [{"action": "scroll", "value": "bottom"}]
+    async with AsyncClient(api_key="test-key") as su:
+        out = await su.get_page_source(
+            "https://example.com", steps=steps, list_elements=True
+        )
+    assert out == payload
+    query = parse_qs(urlparse(str(route.calls.last.request.url)).query)
+    assert json.loads(query["steps"][0]) == steps
+    assert query["list_elements"][0] == "true"
 
 
 @respx.mock

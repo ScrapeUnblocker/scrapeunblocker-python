@@ -57,6 +57,51 @@ html = su.get_page_source(
 )
 ```
 
+## Browser steps
+
+Drive the page in a real browser after it loads - click, type, wait for content, scroll - then capture the result. Pass an ordered list of action dicts; they run in sequence:
+
+```python
+html = su.get_page_source(
+    "https://example.com/search",
+    steps=[
+        {"action": "type", "selector": "#q", "value": "wireless earbuds", "clear": True},
+        {"action": "press_key", "value": "Enter"},
+        {"action": "wait_for", "selector": ".results"},
+        {"action": "scroll", "value": "bottom"},
+    ],
+)
+```
+
+Supported actions: `wait_for` (`selector`, `selector_type?`, `timeout_ms?`), `wait_for_text` (`value`, `timeout_ms?`), `wait` (`value` ms), `click`, `type` (`value`, `clear?` - human-like typing), `select` (`value`), `press_key` (`value` one of Enter, Tab, Escape, Backspace, Delete, Space, ArrowUp/Down/Left/Right, Home, End, PageUp, PageDown) and `scroll` (`value` = `"bottom"` or an int pixel amount). `selector_type` is one of `css` (default), `xPath`, `className` or `tagName`.
+
+A request with `steps` runs once and is non-idempotent. If a step fails (a selector never appears, a `wait_for_text` times out), the call raises `StepFailedError` with the details:
+
+```python
+from scrapeunblocker import StepFailedError
+
+try:
+    su.get_page_source(url, steps=[{"action": "click", "selector": "#missing"}])
+except StepFailedError as e:
+    print(e.step_index, e.action, e.reason, e.selector)
+    print(e.html)   # page HTML captured at the moment the step failed
+```
+
+`StepFailedError` subclasses `ValidationError` (HTTP 422), so `except ValidationError` still catches it.
+
+## List elements
+
+Ask the API to return the page's interactive/labelled elements as JSON instead of HTML - handy for discovering the selectors to feed into `steps`:
+
+```python
+result = su.get_page_source("https://example.com", list_elements=True)
+print(result["count"])
+for el in result["elements"]:
+    print(el["tag"], el["selector"], el.get("text"), el.get("aria_label"))
+```
+
+With `list_elements=True` the method returns a `dict` (`{"url", "count", "elements": [...]}`) rather than an HTML string.
+
 ## Get parsed JSON
 
 Pass a URL and get back structured data extracted via Schema.org, `__NEXT_DATA__` or AI-generated rules:
@@ -212,6 +257,7 @@ except UpstreamOutageError:
 | `BrowserTimeoutError` | 408 | Our browser run timed out before the page was ready |
 | `UnsupportedContentError` | 415 | The URL serves something other than HTML |
 | `ValidationError` | 422 | Missing or wrong-typed parameter; `body` holds the `detail` array |
+| `StepFailedError` | 422 | A browser `steps` action failed; carries `step_index`, `action`, `reason`, `selector`, `html` (subclass of `ValidationError`) |
 | `RateLimitError` | 429 | Too many requests |
 | `UpstreamOutageError` | 503 | The target origin is down |
 | `ServerError` | 5xx | Unexpected server error, including a 504 upstream timeout |

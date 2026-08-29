@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.0 (2026-08-29)
+
+- `get_page_source()` (and its async twin) gained two new parameters for the getPageSource endpoint:
+  - `steps`: an ordered list of browser-action dicts run in a real browser after the page loads - `wait_for`, `wait_for_text`, `wait`, `click`, `type` (human-like), `select`, `press_key` and `scroll`. Pass a plain list of dicts, e.g. `[{"action": "click", "selector": "#more"}, {"action": "wait_for", "selector": ".results"}]`; the SDK JSON-encodes it into the `steps` query param. A request with steps runs once and is non-idempotent.
+  - `list_elements`: when `True`, the API returns a JSON dict (`{"url", "count", "elements": [...]}`) describing the page's interactive/labelled elements instead of HTML - handy for discovering the selectors to drive `steps`. The method then returns that `dict` rather than a string, mirroring `get_parsed()`.
+- Added `StepFailedError` (a subclass of `ValidationError`, HTTP 422) raised when a browser step fails. It surfaces the API's `step_failed` body directly through `step_index`, `action`, `reason`, `selector` and `html` attributes. Because it derives from `ValidationError`, existing `except ValidationError` / `except APIError` handlers keep catching it; ordinary (non-step) 422s stay a plain `ValidationError`.
+
+No breaking changes: the new parameters default to off, and `StepFailedError` is a `ValidationError` subclass.
+
 ## 0.1.9 (2026-08-28)
 
 - Added `amazon_product()` and `amazon_search()` (and their async twins) for the new Amazon plugin. `amazon_product()` returns one product by ASIN or URL - title, brand, numeric price and currency, list price and savings, availability, rating, review count, seller, feature bullets, categories and images. `amazon_search()` returns a keyword search's cards - asin, title, price, list price, rating, review count, a clean product URL, image and the sponsored/prime flags - on any of 20 regional marketplaces.

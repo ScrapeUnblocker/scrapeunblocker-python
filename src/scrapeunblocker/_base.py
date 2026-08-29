@@ -7,6 +7,7 @@ apart.
 
 from __future__ import annotations
 
+import json
 import os
 from typing import Any, Dict, Optional, Type
 
@@ -27,6 +28,7 @@ from .exceptions import (
     RateLimitError,
     ScrapeUnblockerError,
     ServerError,
+    StepFailedError,
     UnsupportedContentError,
     UpstreamOutageError,
     ValidationError,
@@ -96,6 +98,9 @@ def raise_for_status(response: httpx.Response) -> None:
     if status == 415:
         raise UnsupportedContentError(message, status_code=status, body=body)
     if status == 422:
+        step_error = _step_failed_error(body)
+        if step_error is not None:
+            raise step_error
         raise ValidationError(message, status_code=status, body=body)
     if status == 429:
         raise RateLimitError(message, status_code=status, body=body)
@@ -104,6 +109,36 @@ def raise_for_status(response: httpx.Response) -> None:
     if status >= 500:
         raise ServerError(message, status_code=status, body=body)
     raise APIError(message, status_code=status, body=body)
+
+
+def _step_failed_error(body: Optional[str]) -> Optional[StepFailedError]:
+    """Build a :class:`StepFailedError` from a ``step_failed`` 422 body.
+
+    A 422 raised by a ``steps`` run carries a JSON body of
+    ``{"error": "step_failed", "step_index", "action", "reason", "selector",
+    "html"}``. Anything else (a plain FastAPI validation error) returns None
+    so the caller falls back to the general :class:`ValidationError`.
+    """
+    try:
+        data = json.loads(body or "")
+    except (ValueError, TypeError):
+        return None
+    if not isinstance(data, dict) or data.get("error") != "step_failed":
+        return None
+    index = data.get("step_index")
+    action = data.get("action")
+    reason = data.get("reason")
+    message = f"Browser step {index} ({action}) failed: {reason}"
+    return StepFailedError(
+        message,
+        status_code=422,
+        body=body,
+        step_index=index,
+        action=action,
+        reason=reason,
+        selector=data.get("selector"),
+        html=data.get("html"),
+    )
 
 
 def _auth_error_class(body: Optional[str]) -> Type[AuthenticationError]:

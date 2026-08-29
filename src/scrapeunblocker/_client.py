@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+import json
 import time
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import httpx
 
@@ -129,7 +130,9 @@ class Client:
         method: Optional[str] = None,
         value: Optional[str] = None,
         method_timeout: Optional[int] = None,
-    ) -> str:
+        steps: Optional[List[Dict[str, Any]]] = None,
+        list_elements: bool = False,
+    ) -> Any:
         """Fetch a URL and return the fully rendered HTML.
 
         The page is loaded in a real browser behind the appropriate anti-bot
@@ -143,9 +146,32 @@ class Client:
             method: Advanced render-wait method (``"css"``, ``"js"``, ...).
             value: The selector/expression paired with ``method``.
             method_timeout: Cap in seconds for the render-wait method.
+            steps: An ordered list of browser-action dicts run in a real
+                browser after the page loads, e.g.
+                ``[{"action": "click", "selector": "#more"},
+                {"action": "wait_for", "selector": ".results"}]``. Supported
+                actions: ``wait_for`` (``selector``, ``selector_type?``,
+                ``timeout_ms?``), ``wait_for_text`` (``value``, ``timeout_ms?``),
+                ``wait`` (``value`` ms), ``click``, ``type`` (``value``,
+                ``clear?``), ``select`` (``value``), ``press_key`` (``value``
+                one of Enter/Tab/Escape/Backspace/Delete/Space/Arrow*/Home/End/
+                PageUp/PageDown) and ``scroll`` (``value`` ``"bottom"`` or an
+                int pixel amount). ``selector_type`` is one of ``css``
+                (default), ``xPath``, ``className`` or ``tagName``. A request
+                with steps runs once and is non-idempotent; if a step fails the
+                API answers 422 and this method raises
+                :class:`~scrapeunblocker.StepFailedError` carrying
+                ``step_index``, ``action``, ``reason``, ``selector`` and
+                ``html``.
+            list_elements: When ``True`` the API returns a JSON dict
+                (``{"url", "count", "elements": [...]}``) describing the
+                interactive/labelled elements on the page instead of HTML -
+                handy for discovering the selectors to drive ``steps``. The
+                method then returns that parsed ``dict`` rather than a string.
 
         Returns:
-            The page HTML as a string.
+            The page HTML as a string, or the parsed JSON ``dict`` when
+            ``list_elements=True``.
         """
         params = _base.build_params(
             url=url,
@@ -154,8 +180,12 @@ class Client:
             method=method,
             value=value,
             method_timeout=method_timeout,
+            steps=json.dumps(steps) if steps is not None else None,
+            list_elements=True if list_elements else None,
         )
         response = self._request("/getPageSource", params)
+        if list_elements:
+            return response.json()
         return response.text
 
     def get_parsed(

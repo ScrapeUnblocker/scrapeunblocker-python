@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Any, Dict, Optional
+import json
+from typing import Any, Dict, List, Optional
 
 import httpx
 
@@ -122,8 +123,17 @@ class AsyncClient:
         method: Optional[str] = None,
         value: Optional[str] = None,
         method_timeout: Optional[int] = None,
-    ) -> str:
-        """Fetch a URL and return the fully rendered HTML."""
+        steps: Optional[List[Dict[str, Any]]] = None,
+        list_elements: bool = False,
+    ) -> Any:
+        """Fetch a URL and return the fully rendered HTML.
+
+        See :meth:`scrapeunblocker.Client.get_page_source` for the full
+        parameter reference. ``steps`` runs an ordered list of browser-action
+        dicts after load (raising :class:`~scrapeunblocker.StepFailedError` on
+        a failed step), and ``list_elements=True`` returns the page's elements
+        as a JSON ``dict`` instead of HTML.
+        """
         params = _base.build_params(
             url=url,
             proxy_country=proxy_country,
@@ -131,8 +141,12 @@ class AsyncClient:
             method=method,
             value=value,
             method_timeout=method_timeout,
+            steps=json.dumps(steps) if steps is not None else None,
+            list_elements=True if list_elements else None,
         )
         response = await self._request("/getPageSource", params)
+        if list_elements:
+            return response.json()
         return response.text
 
     async def get_parsed(

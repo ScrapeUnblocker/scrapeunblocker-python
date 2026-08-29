@@ -164,6 +164,47 @@ class ValidationError(APIError):
     """
 
 
+class StepFailedError(ValidationError):
+    """A browser step in a ``steps`` sequence could not run (HTTP 422).
+
+    Raised when the API executes the ordered ``steps`` you passed to
+    ``get_page_source()`` and one of them fails - a selector never appears, a
+    ``wait_for_text`` times out, and so on. The API answers 422 with a JSON
+    body of ``{"error": "step_failed", ...}``, and this subclass surfaces its
+    fields directly so you do not have to parse the body by hand:
+
+    Attributes:
+        step_index: Zero-based index of the step that failed.
+        action: The action name of the failed step, e.g. ``"click"``.
+        reason: Human-readable explanation of the failure.
+        selector: The selector the step was acting on, if any.
+        html: The page HTML captured at the moment the step failed, useful
+            for working out why the selector was not there.
+
+    It derives from :class:`ValidationError` (itself a 422), so existing
+    ``except ValidationError`` handlers keep catching it.
+    """
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        status_code: int,
+        body: Optional[str] = None,
+        step_index: Optional[int] = None,
+        action: Optional[str] = None,
+        reason: Optional[str] = None,
+        selector: Optional[str] = None,
+        html: Optional[str] = None,
+    ):
+        super().__init__(message, status_code=status_code, body=body)
+        self.step_index = step_index
+        self.action = action
+        self.reason = reason
+        self.selector = selector
+        self.html = html
+
+
 class BlockedError(APIError):
     """The target site blocked every available bypass path (HTTP 403).
 
