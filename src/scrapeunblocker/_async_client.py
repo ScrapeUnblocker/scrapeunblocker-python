@@ -223,6 +223,25 @@ class AsyncClient:
             gl=gl,
         )
 
+    async def meta_ad_library(
+        self,
+        advertiser: str,
+        *,
+        country: Optional[str] = None,
+        active_status: Optional[str] = None,
+        media_type: Optional[str] = None,
+        max_ads: Optional[int] = None,
+    ) -> Any:
+        """Return an advertiser's Meta/Facebook Ad Library ads as JSON."""
+        return await self._post_json(
+            "/ads/meta-ad-library",
+            advertiser=advertiser,
+            country=country,
+            active_status=active_status,
+            media_type=media_type,
+            max_ads=max_ads,
+        )
+
     async def oopbuy_search(
         self,
         keyword: str,

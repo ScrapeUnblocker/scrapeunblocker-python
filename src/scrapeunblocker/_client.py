@@ -297,6 +297,39 @@ class Client:
             gl=gl,
         )
 
+    def meta_ad_library(
+        self,
+        advertiser: str,
+        *,
+        country: Optional[str] = None,
+        active_status: Optional[str] = None,
+        media_type: Optional[str] = None,
+        max_ads: Optional[int] = None,
+    ) -> Any:
+        """Return an advertiser's Meta/Facebook Ad Library ads as JSON.
+
+        Returns the ads an advertiser is (or was) running, each with ad text,
+        CTA text, display format, creatives (image and video URLs), link URL,
+        platforms, when it started running and whether it is still active.
+
+        Args:
+            advertiser: The advertiser name or page, e.g. "Nike".
+            country: Ad Library country (ISO-2). API default: US.
+            active_status: ``"active"``, ``"inactive"`` or ``"all"``.
+                API default: active.
+            media_type: ``"all"``, ``"image"``, ``"video"`` or ``"meme"``.
+                API default: all.
+            max_ads: Maximum number of ads to return. API default: 50.
+        """
+        return self._post_json(
+            "/ads/meta-ad-library",
+            advertiser=advertiser,
+            country=country,
+            active_status=active_status,
+            media_type=media_type,
+            max_ads=max_ads,
+        )
+
     def oopbuy_search(
         self,
         keyword: str,

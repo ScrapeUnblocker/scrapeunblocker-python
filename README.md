@@ -131,6 +131,16 @@ for biz in local["results"]:
     print(biz["name"], biz["rating"], biz["reviews"], biz["address"])
 ```
 
+## Meta Ad Library
+
+```python
+# Ads an advertiser is running in the Meta/Facebook Ad Library
+ads = su.meta_ad_library("Nike", country="US")
+for ad in ads["results"]:
+    print(ad["ad_text"], ad["cta_text"], ad["display_format"], ad["is_active"])
+    print("  link:", ad["link_url"], "platforms:", ad["platforms"])
+```
+
 ## Oopbuy product search
 
 ```python

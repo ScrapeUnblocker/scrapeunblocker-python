@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.1 (2026-09-02)
+
+- Added `meta_ad_library()` (and its async twin) for the new Meta Ad Library plugin (`POST /ads/meta-ad-library`). Given an `advertiser` name it returns that advertiser's Meta/Facebook Ad Library ads as JSON - each with ad text, CTA text, display format, creatives (image and video URLs), link URL, platforms, when it started running and whether it is still active. Optional `country`, `active_status`, `media_type` and `max_ads` refine the query; when omitted the API applies its own defaults (country=US, active_status=active, media_type=all, max_ads=50).
+
+No breaking changes.
+
 ## 0.2.0 (2026-08-29)
 
 - `get_page_source()` (and its async twin) gained two new parameters for the getPageSource endpoint:

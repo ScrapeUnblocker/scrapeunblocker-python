@@ -230,6 +230,20 @@ def test_google_local():
 
 
 @respx.mock
+def test_meta_ad_library():
+    route = respx.post(f"{BASE}/ads/meta-ad-library").mock(
+        return_value=httpx.Response(200, json={"results": []})
+    )
+    with make_client() as su:
+        out = su.meta_ad_library("Nike", country="US")
+    assert out == {"results": []}
+    url = str(route.calls.last.request.url)
+    assert "advertiser=Nike" in url
+    assert "country=US" in url
+    assert "active_status" not in url
+
+
+@respx.mock
 def test_oopbuy_search():
     route = respx.post(f"{BASE}/goods/oopbuy-search").mock(
         return_value=httpx.Response(200, json={"results": []})
@@ -442,3 +456,16 @@ async def test_async_error_mapping():
     async with AsyncClient(api_key="test-key", max_retries=0) as su:
         with pytest.raises(BlockedError):
             await su.get_page_source("https://example.com")
+
+
+@respx.mock
+async def test_async_meta_ad_library():
+    route = respx.post(f"{BASE}/ads/meta-ad-library").mock(
+        return_value=httpx.Response(200, json={"results": []})
+    )
+    async with AsyncClient(api_key="test-key") as su:
+        out = await su.meta_ad_library("Nike", country="US")
+    assert out == {"results": []}
+    url = str(route.calls.last.request.url)
+    assert "advertiser=Nike" in url
+    assert "country=US" in url
