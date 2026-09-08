@@ -501,6 +501,98 @@ class Client:
             proxy_country=proxy_country,
         )
 
+    def tiktok_profile(
+        self,
+        username: str,
+        *,
+        max_videos: int = 10,
+        video_details: bool = True,
+        proxy_country: Optional[str] = None,
+    ) -> Any:
+        """Scrape a public TikTok creator profile and its newest videos.
+
+        Returns the exact follower, following, like and video counts (TikTok
+        publishes rounded numbers for display and exact ones underneath),
+        bio, bio link, verified / private / organization / seller flags,
+        avatar, and a ``videos`` array of the creator's newest posts - each in
+        the full :meth:`tiktok_video` shape. No login or cookies.
+
+        Args:
+            username: Handle (``"nasa"``, ``"@nasa"``) or a profile URL.
+            max_videos: Newest videos to include, 0-200. ``0`` is profile only.
+                Up to 10 come from TikTok's server-rendered widget in seconds;
+                more scrolls the real grid in a browser session (10-30 s).
+            video_details: Read each widget-listed video's own page for exact
+                engagement, hashtags, music and media URLs.
+            proxy_country: Exit-IP country (ISO-2); only for region-locked items.
+        """
+        return self._post_json(
+            "/social/tiktok-profile",
+            username=username,
+            max_videos=max_videos,
+            video_details=None if video_details else False,
+            proxy_country=proxy_country,
+        )
+
+    def tiktok_video(
+        self,
+        url: str,
+        *,
+        include_transcript: bool = False,
+        transcript_language: Optional[str] = None,
+        proxy_country: Optional[str] = None,
+    ) -> Any:
+        """Scrape one TikTok video or photo post.
+
+        Returns description, hashtags, mentions, language, publish date, exact
+        ``stats`` (plays, likes, comments, shares, saves, reposts), the author
+        with their stats, ``video`` (duration, size, codec, cover, play and
+        download URLs, per-quality variants, subtitle tracks), ``images`` for
+        photo posts, ``music``, ``flags``, content ``labels`` and location.
+        With ``include_transcript=True`` the subtitle track is downloaded too
+        and returned as plain text in ``transcript``.
+
+        Args:
+            url: Video / photo-post URL, a bare video id, or a ``vm.tiktok.com``
+                short link.
+            include_transcript: Also return the subtitle track as text.
+            transcript_language: Preferred subtitle language when several
+                exist, e.g. ``"eng-US"`` or just ``"eng"``.
+            proxy_country: Exit-IP country (ISO-2).
+        """
+        return self._post_json(
+            "/social/tiktok-video",
+            url=url,
+            include_transcript=include_transcript or None,
+            transcript_language=transcript_language,
+            proxy_country=proxy_country,
+        )
+
+    def tiktok_hashtag(
+        self,
+        hashtag: str,
+        *,
+        max_videos: int = 10,
+        video_details: bool = True,
+        proxy_country: Optional[str] = None,
+    ) -> Any:
+        """Scrape a TikTok hashtag: total views and videos plus its videos.
+
+        Args:
+            hashtag: Name (``"nasa"``, ``"#nasa"``) or a tag URL.
+            max_videos: Videos to include, 0-200. ``0`` is totals only.
+            video_details: Read each widget-listed video's own page for the
+                full video shape.
+            proxy_country: Exit-IP country (ISO-2).
+        """
+        return self._post_json(
+            "/social/tiktok-hashtag",
+            hashtag=hashtag,
+            max_videos=max_videos,
+            video_details=None if video_details else False,
+            proxy_country=proxy_country,
+        )
+
     def get_image(
         self, url: str, *, proxy_country: Optional[str] = None
     ) -> bytes:

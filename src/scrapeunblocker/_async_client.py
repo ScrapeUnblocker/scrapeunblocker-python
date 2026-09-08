@@ -349,6 +349,57 @@ class AsyncClient:
             proxy_country=proxy_country,
         )
 
+    async def tiktok_profile(
+        self,
+        username: str,
+        *,
+        max_videos: int = 10,
+        video_details: bool = True,
+        proxy_country: Optional[str] = None,
+    ) -> Any:
+        """Scrape a public TikTok creator profile and its newest videos."""
+        return await self._post_json(
+            "/social/tiktok-profile",
+            username=username,
+            max_videos=max_videos,
+            video_details=None if video_details else False,
+            proxy_country=proxy_country,
+        )
+
+    async def tiktok_video(
+        self,
+        url: str,
+        *,
+        include_transcript: bool = False,
+        transcript_language: Optional[str] = None,
+        proxy_country: Optional[str] = None,
+    ) -> Any:
+        """Scrape one TikTok video or photo post."""
+        return await self._post_json(
+            "/social/tiktok-video",
+            url=url,
+            include_transcript=include_transcript or None,
+            transcript_language=transcript_language,
+            proxy_country=proxy_country,
+        )
+
+    async def tiktok_hashtag(
+        self,
+        hashtag: str,
+        *,
+        max_videos: int = 10,
+        video_details: bool = True,
+        proxy_country: Optional[str] = None,
+    ) -> Any:
+        """Scrape a TikTok hashtag: total views and videos plus its videos."""
+        return await self._post_json(
+            "/social/tiktok-hashtag",
+            hashtag=hashtag,
+            max_videos=max_videos,
+            video_details=None if video_details else False,
+            proxy_country=proxy_country,
+        )
+
     async def get_image(
         self, url: str, *, proxy_country: Optional[str] = None
     ) -> bytes:

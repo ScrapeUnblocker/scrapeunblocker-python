@@ -161,6 +161,21 @@ if items["exactMatches"]:
         print("  seller:", item["seller"]["username"], item["seller"]["feedbackPercent"])
 ```
 
+### TikTok
+
+```python
+profile = su.tiktok_profile("nasa", max_videos=5)      # exact stats + newest videos
+print(profile["stats"]["followers"], profile["videos"][0]["stats"]["plays"])
+
+video = su.tiktok_video("https://www.tiktok.com/@nasa/video/7665075736742530317", include_transcript=True)
+print(video["stats"], video["music"]["title"], video["transcript"])
+
+tag = su.tiktok_hashtag("nasa", max_videos=10)
+print(tag["stats"]["views"], len(tag["videos"]))
+```
+
+Profiles and hashtags list up to 10 videos in a couple of seconds from TikTok's server-rendered widget; ask for more (up to 200) and the real grid is scrolled in a browser session.
+
 ## Amazon
 
 ```python

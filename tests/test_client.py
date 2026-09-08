@@ -469,3 +469,37 @@ async def test_async_meta_ad_library():
     url = str(route.calls.last.request.url)
     assert "advertiser=Nike" in url
     assert "country=US" in url
+
+
+@respx.mock
+def test_tiktok_profile():
+    route = respx.post(f"{BASE}/social/tiktok-profile").mock(
+        return_value=httpx.Response(200, json={"username": "nasa", "videos": [], "videosCollected": 0})
+    )
+    with make_client() as su:
+        out = su.tiktok_profile("nasa", max_videos=5, video_details=False)
+    assert out["username"] == "nasa"
+    url = str(route.calls.last.request.url)
+    assert "username=nasa" in url
+    assert "max_videos=5" in url
+    assert "video_details=false" in url
+
+
+@respx.mock
+def test_tiktok_video_and_hashtag():
+    v = respx.post(f"{BASE}/social/tiktok-video").mock(
+        return_value=httpx.Response(200, json={"id": "7665075736742530317", "stats": {"plays": 1}})
+    )
+    h = respx.post(f"{BASE}/social/tiktok-hashtag").mock(
+        return_value=httpx.Response(200, json={"hashtag": "nasa", "stats": {"views": 1}, "videos": []})
+    )
+    with make_client() as su:
+        video = su.tiktok_video("7665075736742530317", include_transcript=True, transcript_language="eng")
+        tag = su.tiktok_hashtag("#nasa", max_videos=0)
+    assert video["id"] == "7665075736742530317" and tag["hashtag"] == "nasa"
+    vurl = str(v.calls.last.request.url)
+    assert "url=7665075736742530317" in vurl and "include_transcript=true" in vurl and "transcript_language=eng" in vurl
+    hurl = str(h.calls.last.request.url)
+    assert "hashtag=%23nasa" in hurl and "max_videos=0" in hurl
+    # Defaults are not sent.
+    assert "video_details=" not in hurl
