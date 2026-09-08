@@ -400,6 +400,36 @@ class AsyncClient:
             proxy_country=proxy_country,
         )
 
+    async def tiktok_search(
+        self,
+        query: str,
+        *,
+        max_results: int = 20,
+        proxy_country: Optional[str] = None,
+    ) -> Any:
+        """Search TikTok videos by keyword."""
+        return await self._post_json(
+            "/social/tiktok-search",
+            query=query,
+            max_results=max_results,
+            proxy_country=proxy_country,
+        )
+
+    async def tiktok_comments(
+        self,
+        url: str,
+        *,
+        max_comments: int = 50,
+        proxy_country: Optional[str] = None,
+    ) -> Any:
+        """Scrape the comments of a TikTok post."""
+        return await self._post_json(
+            "/social/tiktok-comments",
+            url=url,
+            max_comments=max_comments,
+            proxy_country=proxy_country,
+        )
+
     async def get_image(
         self, url: str, *, proxy_country: Optional[str] = None
     ) -> bytes:

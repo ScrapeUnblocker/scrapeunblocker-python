@@ -593,6 +593,57 @@ class Client:
             proxy_country=proxy_country,
         )
 
+    def tiktok_search(
+        self,
+        query: str,
+        *,
+        max_results: int = 20,
+        proxy_country: Optional[str] = None,
+    ) -> Any:
+        """Search TikTok videos by keyword.
+
+        Runs the search in a browser session that clears TikTok's captcha, so
+        the ``results`` carry TikTok's own ranking - each in the full
+        :meth:`tiktok_video` shape. Takes 20-45 s.
+
+        Args:
+            query: Search keywords, e.g. ``"space telescope"``.
+            max_results: Videos to return, 1-200 (about 12 per scroll).
+            proxy_country: Exit-IP country (ISO-2) - the region TikTok ranks for.
+        """
+        return self._post_json(
+            "/social/tiktok-search",
+            query=query,
+            max_results=max_results,
+            proxy_country=proxy_country,
+        )
+
+    def tiktok_comments(
+        self,
+        url: str,
+        *,
+        max_comments: int = 50,
+        proxy_country: Optional[str] = None,
+    ) -> Any:
+        """Scrape the comments of a TikTok post.
+
+        Opens the post in a browser session that clears TikTok's captcha and
+        returns ``comments`` - each with text, createdAt, likes, replyCount,
+        language, author, isCreator, likedByCreator and preloaded replies -
+        plus ``totalComments`` and ``hasMore``. Takes 20-45 s.
+
+        Args:
+            url: Video / photo-post URL, bare id or short link.
+            max_comments: Top-level comments to return, 1-500 (20 per scroll).
+            proxy_country: Exit-IP country (ISO-2).
+        """
+        return self._post_json(
+            "/social/tiktok-comments",
+            url=url,
+            max_comments=max_comments,
+            proxy_country=proxy_country,
+        )
+
     def get_image(
         self, url: str, *, proxy_country: Optional[str] = None
     ) -> bytes:

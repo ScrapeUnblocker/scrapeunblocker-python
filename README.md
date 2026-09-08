@@ -172,6 +172,9 @@ print(video["stats"], video["music"]["title"], video["transcript"])
 
 tag = su.tiktok_hashtag("nasa", max_videos=10)
 print(tag["stats"]["views"], len(tag["videos"]))
+
+results = su.tiktok_search("space telescope", max_results=25)   # TikTok's own ranking
+comments = su.tiktok_comments("https://www.tiktok.com/@nasa/video/7665075736742530317", max_comments=40)
 ```
 
 Profiles and hashtags list up to 10 videos in a couple of seconds from TikTok's server-rendered widget; ask for more (up to 200) and the real grid is scrolled in a browser session.

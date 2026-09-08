@@ -503,3 +503,14 @@ def test_tiktok_video_and_hashtag():
     assert "hashtag=%23nasa" in hurl and "max_videos=0" in hurl
     # Defaults are not sent.
     assert "video_details=" not in hurl
+
+
+@respx.mock
+def test_tiktok_search_and_comments():
+    s = respx.post(f"{BASE}/social/tiktok-search").mock(return_value=httpx.Response(200, json={"query": "space", "results": []}))
+    c = respx.post(f"{BASE}/social/tiktok-comments").mock(return_value=httpx.Response(200, json={"videoId": "1", "comments": []}))
+    with make_client() as su:
+        assert su.tiktok_search("space", max_results=30, proxy_country="US")["query"] == "space"
+        assert su.tiktok_comments("7665075736742530317", max_comments=100)["videoId"] == "1"
+    assert "query=space" in str(s.calls.last.request.url) and "max_results=30" in str(s.calls.last.request.url)
+    assert "max_comments=100" in str(c.calls.last.request.url)
