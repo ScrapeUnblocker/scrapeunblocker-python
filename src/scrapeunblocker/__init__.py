@@ -8,7 +8,7 @@ Basic usage::
     html = su.get_page_source("https://example.com")
     product = su.get_parsed("https://www.amazon.com/dp/B08N5WRWNW")
 
-See https://developers.scrapeunblocker.com for the full API reference.
+See https://docs.scrapeunblocker.com for the full API reference.
 """
 
 from ._async_client import AsyncClient
