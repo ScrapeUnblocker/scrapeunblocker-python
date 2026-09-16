@@ -230,6 +230,26 @@ hotels = su.skyscanner.hotels(destination="Madrid", checkin="2026-09-01", checko
 cars = su.skyscanner.carhire(pickup="Madrid", pickup_datetime="2026-09-01T10:00", dropoff_datetime="2026-09-03T10:00")
 ```
 
+## Southwest plugin
+
+Southwest fares are not sold through the usual aggregators, so this queries
+Southwest's own booking API directly and returns its raw JSON. Airports are
+IATA codes; omit `return_date` for a one-way search.
+
+```python
+# Round-trip, priced in dollars
+flights = su.southwest.flights(
+    origin="DAL", dest="HOU",
+    depart_date="2026-10-20", return_date="2026-10-27",
+)
+
+# One-way, priced in Rapid Rewards points
+one_way = su.southwest.flights(
+    origin="DAL", dest="HOU",
+    depart_date="2026-10-20", adults=2, fare_type="points",
+)
+```
+
 ## Async
 
 Every method has an async twin on `AsyncClient`:

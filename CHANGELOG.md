@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.0 (2026-09-16)
+
+- Added the `southwest` namespace with `southwest.flights()` (and its async twin) for the new Southwest Airlines plugin (`POST /flights/southwest-quotes`). Given `origin`/`dest` IATA codes and a `depart_date` it queries Southwest's own booking API and returns the raw booking/shopping JSON - Southwest fares are not sold through the usual aggregators. Optional `return_date` (omit for one-way), `adults` (1-8), `fare_type` (`"dollars"` or `"points"`), `proxy_country` (Southwest is US-only) and `max_attempts` (1-5) refine the search.
+
+No breaking changes.
+
 ## 0.3.0 (2026-09-08)
 
 - Added `tiktok_profile()`, `tiktok_video()`, `tiktok_hashtag()`, `tiktok_search()` and `tiktok_comments()` (and their async twins) for the new TikTok plugin: a creator's exact follower / like / video counts with their newest videos (up to 200), any video or photo post with exact plays, likes, comments, shares, saves and reposts, hashtags, music, play / download URLs, subtitle tracks and an optional transcript, a hashtag's total views and videos with its videos, keyword search in TikTok's own ranking, and the comments of any post. No login.

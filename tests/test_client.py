@@ -349,6 +349,56 @@ def test_skyscanner_flights():
 
 
 @respx.mock
+def test_southwest_flights():
+    route = respx.post(f"{BASE}/flights/southwest-quotes").mock(
+        return_value=httpx.Response(200, json={"trips": []})
+    )
+    with make_client() as su:
+        out = su.southwest.flights(
+            origin="DAL",
+            dest="HOU",
+            depart_date="2026-10-20",
+            return_date="2026-10-27",
+            fare_type="points",
+        )
+    assert out == {"trips": []}
+    url = str(route.calls.last.request.url)
+    assert "origin=DAL" in url
+    assert "dest=HOU" in url
+    assert "depart_date=2026-10-20" in url
+    assert "return_date=2026-10-27" in url
+    assert "fare_type=points" in url
+    # Defaults are sent through as-is.
+    assert "adults=1" in url
+    assert "proxy_country=US" in url
+    assert "max_attempts=3" in url
+
+
+@respx.mock
+def test_southwest_flights_one_way_omits_return_date():
+    route = respx.post(f"{BASE}/flights/southwest-quotes").mock(
+        return_value=httpx.Response(200, json={"trips": []})
+    )
+    with make_client() as su:
+        su.southwest.flights(origin="DAL", dest="HOU", depart_date="2026-10-20")
+    # return_date is None, so it must not be sent at all.
+    assert "return_date" not in str(route.calls.last.request.url)
+
+
+@respx.mock
+async def test_async_southwest_flights():
+    route = respx.post(f"{BASE}/flights/southwest-quotes").mock(
+        return_value=httpx.Response(200, json={"trips": []})
+    )
+    async with AsyncClient(api_key="test-key") as su:
+        out = await su.southwest.flights(
+            origin="DAL", dest="HOU", depart_date="2026-10-20"
+        )
+    assert out == {"trips": []}
+    assert "origin=DAL" in str(route.calls.last.request.url)
+
+
+@respx.mock
 @pytest.mark.parametrize(
     "status,exc",
     [

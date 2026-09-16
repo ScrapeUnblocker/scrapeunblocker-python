@@ -40,6 +40,55 @@ class _SkyscannerNamespace:
         return self._c._post_json("/carhire/skyscanner-quotes", **params)
 
 
+class _SouthwestNamespace:
+    """Southwest Airlines plugin endpoints (flights)."""
+
+    def __init__(self, client: "Client"):
+        self._c = client
+
+    def flights(
+        self,
+        origin: str,
+        dest: str,
+        depart_date: str,
+        return_date: Optional[str] = None,
+        adults: int = 1,
+        fare_type: str = "dollars",
+        proxy_country: str = "US",
+        max_attempts: int = 3,
+    ) -> Any:
+        """Search Southwest Airlines fares and return the raw booking JSON.
+
+        Southwest fares are not sold through the usual aggregators, so this
+        queries Southwest's own booking/shopping API directly and returns its
+        response untouched.
+
+        Args:
+            origin: Origin airport IATA code, e.g. ``"DAL"``.
+            dest: Destination airport IATA code, e.g. ``"HOU"``.
+            depart_date: Outbound date as ``YYYY-MM-DD``.
+            return_date: Inbound date as ``YYYY-MM-DD``. Omit for one-way.
+            adults: Number of adult passengers (1-8).
+            fare_type: Price the fares in ``"dollars"`` or ``"points"``.
+            proxy_country: Exit-IP country (ISO-2); Southwest is US-only.
+            max_attempts: How many times the API retries the booking flow (1-5).
+
+        Returns:
+            The raw Southwest booking/shopping JSON.
+        """
+        return self._c._post_json(
+            "/flights/southwest-quotes",
+            origin=origin,
+            dest=dest,
+            depart_date=depart_date,
+            return_date=return_date,
+            adults=adults,
+            fare_type=fare_type,
+            proxy_country=proxy_country,
+            max_attempts=max_attempts,
+        )
+
+
 class Client:
     """Client for the ScrapeUnblocker API.
 
@@ -78,6 +127,7 @@ class Client:
             },
         )
         self.skyscanner = _SkyscannerNamespace(self)
+        self.southwest = _SouthwestNamespace(self)
 
     # -- context manager ------------------------------------------------
     def __enter__(self) -> "Client":

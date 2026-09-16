@@ -40,6 +40,41 @@ class _AsyncSkyscannerNamespace:
         return await self._c._post_json("/carhire/skyscanner-quotes", **params)
 
 
+class _AsyncSouthwestNamespace:
+    """Southwest Airlines plugin endpoints (flights)."""
+
+    def __init__(self, client: "AsyncClient"):
+        self._c = client
+
+    async def flights(
+        self,
+        origin: str,
+        dest: str,
+        depart_date: str,
+        return_date: Optional[str] = None,
+        adults: int = 1,
+        fare_type: str = "dollars",
+        proxy_country: str = "US",
+        max_attempts: int = 3,
+    ) -> Any:
+        """Search Southwest Airlines fares and return the raw booking JSON.
+
+        See :meth:`scrapeunblocker.Client.southwest.flights` for the full
+        parameter reference. Omit ``return_date`` for a one-way search.
+        """
+        return await self._c._post_json(
+            "/flights/southwest-quotes",
+            origin=origin,
+            dest=dest,
+            depart_date=depart_date,
+            return_date=return_date,
+            adults=adults,
+            fare_type=fare_type,
+            proxy_country=proxy_country,
+            max_attempts=max_attempts,
+        )
+
+
 class AsyncClient:
     """Async client for the ScrapeUnblocker API.
 
@@ -74,6 +109,7 @@ class AsyncClient:
             },
         )
         self.skyscanner = _AsyncSkyscannerNamespace(self)
+        self.southwest = _AsyncSouthwestNamespace(self)
 
     async def __aenter__(self) -> "AsyncClient":
         return self
