@@ -259,6 +259,23 @@ class AsyncClient:
             gl=gl,
         )
 
+    async def google_images(
+        self,
+        q: str,
+        *,
+        proxy_country: Optional[str] = None,
+        gl: Optional[str] = None,
+        max_results: Optional[int] = None,
+    ) -> Any:
+        """Search Google Images and return the image results as JSON."""
+        return await self._post_json(
+            "/images/google-search",
+            q=q,
+            gl=gl,
+            max_results=max_results,
+            proxy_country=proxy_country,
+        )
+
     async def meta_ad_library(
         self,
         advertiser: str,

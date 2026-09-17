@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.0 (2026-09-17)
+
+- Added `google_images()` (and its async twin) for the new Google Images plugin (`POST /images/google-search`). Given a keyword `q` it returns Google Images results as JSON - each with the full-size `imageUrl` and its `sourceDomain`, plus the source page URL, title, source name, thumbnail URL, pixel dimensions and file size. Optional `gl` (ISO-2 lowercase market), `max_results` (1-100) and `proxy_country` (ISO-2) refine the search.
+
+No breaking changes.
+
 ## 0.4.0 (2026-09-16)
 
 - Added the `southwest` namespace with `southwest.flights()` (and its async twin) for the new Southwest Airlines plugin (`POST /flights/southwest-quotes`). Given `origin`/`dest` IATA codes and a `depart_date` it queries Southwest's own booking API and returns the raw booking/shopping JSON - Southwest fares are not sold through the usual aggregators. Optional `return_date` (omit for one-way), `adults` (1-8), `fare_type` (`"dollars"` or `"points"`), `proxy_country` (Southwest is US-only) and `max_attempts` (1-5) refine the search.

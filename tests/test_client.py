@@ -230,6 +230,21 @@ def test_google_local():
 
 
 @respx.mock
+def test_google_images():
+    route = respx.post(f"{BASE}/images/google-search").mock(
+        return_value=httpx.Response(200, json={"results": []})
+    )
+    with make_client() as su:
+        out = su.google_images("golden retriever puppy", proxy_country="US", gl="us")
+    assert out == {"results": []}
+    url = str(route.calls.last.request.url)
+    assert "q=golden" in url
+    assert "proxy_country=US" in url
+    assert "gl=us" in url
+    assert "max_results" not in url
+
+
+@respx.mock
 def test_meta_ad_library():
     route = respx.post(f"{BASE}/ads/meta-ad-library").mock(
         return_value=httpx.Response(200, json={"results": []})

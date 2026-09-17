@@ -347,6 +347,35 @@ class Client:
             gl=gl,
         )
 
+    def google_images(
+        self,
+        q: str,
+        *,
+        proxy_country: Optional[str] = None,
+        gl: Optional[str] = None,
+        max_results: Optional[int] = None,
+    ) -> Any:
+        """Search Google Images and return the image results as JSON.
+
+        Returns image results, each with the full-size ``imageUrl`` and its
+        ``sourceDomain``, plus the source page URL, title, source name,
+        thumbnail URL, pixel dimensions and file size.
+
+        Args:
+            q: The search keyword, e.g. "golden retriever puppy".
+            proxy_country: Exit-IP country (ISO-2). Image results can be
+                location-sensitive, so set the market you want.
+            gl: Google country of search (ISO-2 lowercase, e.g. "us").
+            max_results: Maximum number of image results to return (1-100).
+        """
+        return self._post_json(
+            "/images/google-search",
+            q=q,
+            gl=gl,
+            max_results=max_results,
+            proxy_country=proxy_country,
+        )
+
     def meta_ad_library(
         self,
         advertiser: str,
