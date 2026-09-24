@@ -264,6 +264,7 @@ class AsyncClient:
         q: str,
         *,
         proxy_country: Optional[str] = None,
+        pages: Optional[int] = None,
         gl: Optional[str] = None,
         max_results: Optional[int] = None,
     ) -> Any:
@@ -271,6 +272,7 @@ class AsyncClient:
         return await self._post_json(
             "/images/google-search",
             q=q,
+            pages=pages,
             gl=gl,
             max_results=max_results,
             proxy_country=proxy_country,

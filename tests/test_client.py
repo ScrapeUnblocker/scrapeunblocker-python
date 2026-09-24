@@ -245,6 +245,20 @@ def test_google_images():
 
 
 @respx.mock
+def test_google_images_pages():
+    route = respx.post(f"{BASE}/images/google-search").mock(
+        return_value=httpx.Response(200, json={"results": [], "pagesFetched": 3})
+    )
+    with make_client() as su:
+        out = su.google_images("golden retriever puppy", proxy_country="DE", pages=3)
+    assert out["pagesFetched"] == 3
+    url = str(route.calls.last.request.url)
+    assert "pages=3" in url
+    assert "proxy_country=DE" in url
+    assert "gl=" not in url
+
+
+@respx.mock
 def test_meta_ad_library():
     route = respx.post(f"{BASE}/ads/meta-ad-library").mock(
         return_value=httpx.Response(200, json={"results": []})

@@ -135,7 +135,7 @@ for biz in local["results"]:
 
 ```python
 # Image results for a keyword and market
-images = su.google_images("golden retriever puppy", proxy_country="US", gl="us")
+images = su.google_images("golden retriever puppy", proxy_country="US", pages=3)
 for img in images["results"]:
     print(img["imageUrl"], img["sourceDomain"], img["title"])
 ```

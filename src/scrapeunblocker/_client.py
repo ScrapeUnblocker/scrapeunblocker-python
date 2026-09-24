@@ -352,6 +352,7 @@ class Client:
         q: str,
         *,
         proxy_country: Optional[str] = None,
+        pages: Optional[int] = None,
         gl: Optional[str] = None,
         max_results: Optional[int] = None,
     ) -> Any:
@@ -359,18 +360,23 @@ class Client:
 
         Returns image results, each with the full-size ``imageUrl`` and its
         ``sourceDomain``, plus the source page URL, title, source name,
-        thumbnail URL, pixel dimensions and file size.
+        thumbnail URL, pixel dimensions and file size. ``pagesFetched`` in the
+        response is how many result pages the call fetched (and was billed for).
 
         Args:
             q: The search keyword, e.g. "golden retriever puppy".
-            proxy_country: Exit-IP country (ISO-2). Image results can be
-                location-sensitive, so set the market you want.
-            gl: Google country of search (ISO-2 lowercase, e.g. "us").
-            max_results: Maximum number of image results to return (1-100).
+            proxy_country: Country to search from (ISO-2). The Google market
+                follows it automatically.
+            pages: How many result pages to fetch (1-5, ~100 results each).
+                Each page fetched is billed as one request.
+            gl: Optional Google market override (ISO-2 lowercase, e.g. "de").
+                Leave unset to follow ``proxy_country``.
+            max_results: Optional cap on the number of results (1-500).
         """
         return self._post_json(
             "/images/google-search",
             q=q,
+            pages=pages,
             gl=gl,
             max_results=max_results,
             proxy_country=proxy_country,
