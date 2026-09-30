@@ -168,7 +168,8 @@ class AsyncClient:
         parameter reference. ``steps`` runs an ordered list of browser-action
         dicts after load (raising :class:`~scrapeunblocker.StepFailedError` on
         a failed step), and ``list_elements=True`` returns the page's elements
-        as a JSON ``dict`` instead of HTML.
+        as a JSON ``dict`` instead of HTML. A target page that answers 404 or
+        410 raises :class:`~scrapeunblocker.TargetNotFoundError` (billed).
         """
         params = _base.build_params(
             url=url,

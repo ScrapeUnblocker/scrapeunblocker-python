@@ -126,11 +126,48 @@ class InvalidRequestError(APIError):
 
 
 class NotFoundError(APIError):
-    """The page loaded but the requested element was absent (HTTP 404).
+    """Something the call asked for does not exist (HTTP 404).
 
-    Only ``get_image()`` raises this: the page rendered fine and contained no
-    ``<img>`` tag.
+    ``get_image()`` raises it when the page rendered fine but contained no
+    ``<img>`` tag, and plugin methods raise it when the item they look up
+    (a product, a profile) does not exist. When the *target page itself*
+    answered 404 or 410, the more specific :class:`TargetNotFoundError`
+    subclass is raised instead.
     """
+
+
+class TargetNotFoundError(NotFoundError):
+    """The target page itself does not exist (HTTP 404 or 410).
+
+    Raised by ``get_page_source()`` / ``get_parsed()`` when the site you asked
+    for answered 404 or 410 on its own. The API passes that status through and
+    marks it with the ``X-Origin-Status`` header, which is how this is told
+    apart from an API-side 404. It is the target's final answer, not a block,
+    so it is never retried - and the call is billed, because the page was
+    fetched and delivered.
+
+    Attributes:
+        origin_status: The status the target answered with (404 or 410).
+        html: The target's own not-found page as served (can be empty), or
+            ``None`` when the response body is a parsed-data JSON payload.
+        destination_url: The URL the target answered for, when the API sent
+            it (``X-Destination-URL``).
+    """
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        status_code: int,
+        body: Optional[str] = None,
+        origin_status: int,
+        html: Optional[str] = None,
+        destination_url: Optional[str] = None,
+    ):
+        super().__init__(message, status_code=status_code, body=body)
+        self.origin_status = origin_status
+        self.html = html
+        self.destination_url = destination_url
 
 
 class BrowserTimeoutError(APIError):

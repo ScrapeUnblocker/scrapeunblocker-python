@@ -29,6 +29,7 @@ from .exceptions import (
     ScrapeUnblockerError,
     ServerError,
     StepFailedError,
+    TargetNotFoundError,
     UnsupportedContentError,
     UpstreamOutageError,
     ValidationError,
@@ -81,6 +82,10 @@ def raise_for_status(response: httpx.Response) -> None:
     except Exception:  # pragma: no cover - defensive
         body = None
 
+    target_error = _target_not_found_error(response, body)
+    if target_error is not None:
+        raise target_error
+
     message = _message_for(status, body)
 
     if status == 400:
@@ -109,6 +114,46 @@ def raise_for_status(response: httpx.Response) -> None:
     if status >= 500:
         raise ServerError(message, status_code=status, body=body)
     raise APIError(message, status_code=status, body=body)
+
+
+def _target_not_found_error(
+    response: httpx.Response, body: Optional[str]
+) -> Optional[TargetNotFoundError]:
+    """Build a :class:`TargetNotFoundError` for the target's own 404/410.
+
+    The API passes a target's "page does not exist" answer through with its
+    status and an ``X-Origin-Status`` header. A 404 without that header is the
+    API's own (a plugin lookup, a missing element) and returns None so the
+    general :class:`NotFoundError` applies.
+    """
+    status = response.status_code
+    origin = response.headers.get("x-origin-status")
+    if status not in (404, 410) or not origin:
+        return None
+    try:
+        origin_status = int(origin)
+    except ValueError:
+        origin_status = status
+    html: Optional[str] = body
+    try:
+        data = json.loads(body or "")
+    except (ValueError, TypeError):
+        data = None
+    if isinstance(data, dict):
+        page = data.get("html")
+        html = page if isinstance(page, str) else None
+    message = (
+        f"Target page does not exist (HTTP {origin_status}). This is the "
+        "target's own answer, not a block; the call is billed."
+    )
+    return TargetNotFoundError(
+        message,
+        status_code=status,
+        body=body,
+        origin_status=origin_status,
+        html=html,
+        destination_url=response.headers.get("x-destination-url"),
+    )
 
 
 def _step_failed_error(body: Optional[str]) -> Optional[StepFailedError]:

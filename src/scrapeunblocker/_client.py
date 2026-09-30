@@ -222,6 +222,10 @@ class Client:
         Returns:
             The page HTML as a string, or the parsed JSON ``dict`` when
             ``list_elements=True``.
+
+        Raises:
+            TargetNotFoundError: The target page itself answered 404 or 410.
+                The call is billed; the not-found page is on ``.html``.
         """
         params = _base.build_params(
             url=url,

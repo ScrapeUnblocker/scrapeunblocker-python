@@ -23,6 +23,7 @@ from scrapeunblocker import (
     RateLimitError,
     ScrapeUnblockerError,
     StepFailedError,
+    TargetNotFoundError,
     UnsupportedContentError,
     UpstreamOutageError,
     ValidationError,
@@ -453,6 +454,80 @@ def test_error_mapping(status, exc):
         with pytest.raises(exc) as info:
             su.get_page_source("https://example.com")
     assert info.value.status_code == status
+
+
+@respx.mock
+@pytest.mark.parametrize("status", [404, 410])
+def test_target_not_found_raises_with_the_page(status):
+    route = respx.post(f"{BASE}/getPageSource").mock(
+        return_value=httpx.Response(
+            status,
+            text="<html><h1>Not Found</h1></html>",
+            headers={
+                "X-Origin-Status": str(status),
+                "X-Destination-URL": "https://example.com/gone",
+            },
+        )
+    )
+    with make_client() as su:
+        with pytest.raises(TargetNotFoundError) as info:
+            su.get_page_source("https://example.com/gone")
+    err = info.value
+    assert err.status_code == status
+    assert err.origin_status == status
+    assert err.html == "<html><h1>Not Found</h1></html>"
+    assert err.destination_url == "https://example.com/gone"
+    assert "billed" in str(err)
+    # A NotFoundError, so existing handlers keep catching it...
+    assert isinstance(err, NotFoundError)
+    # ...and never retried: the target's answer will not change.
+    assert route.call_count == 1
+
+
+@respx.mock
+def test_target_not_found_with_cookies_exposes_the_html():
+    body = json.dumps({"html": "<html>gone</html>", "cookies": [], "proxy_address": "direct"})
+    respx.post(f"{BASE}/getPageSource").mock(
+        return_value=httpx.Response(404, text=body, headers={"X-Origin-Status": "404"})
+    )
+    with make_client() as su:
+        with pytest.raises(TargetNotFoundError) as info:
+            su.get_page_with_cookies("https://example.com/gone")
+    assert info.value.html == "<html>gone</html>"
+    assert info.value.body == body
+
+
+@respx.mock
+def test_api_404_without_origin_status_stays_not_found():
+    respx.post(f"{BASE}/getPageSource").mock(return_value=httpx.Response(404, text="nope"))
+    with make_client() as su:
+        with pytest.raises(NotFoundError) as info:
+            su.get_page_source("https://example.com")
+    assert not isinstance(info.value, TargetNotFoundError)
+
+
+@respx.mock
+def test_legacy_200_with_origin_status_returns_the_page():
+    # Before the API passed the status through, a dead URL came back as a 200
+    # carrying X-Origin-Status. That still returns the page, not an error.
+    respx.post(f"{BASE}/getPageSource").mock(
+        return_value=httpx.Response(200, text="<html>gone</html>", headers={"X-Origin-Status": "404"})
+    )
+    with make_client() as su:
+        assert su.get_page_source("https://example.com/gone") == "<html>gone</html>"
+
+
+@respx.mock
+@pytest.mark.asyncio
+async def test_async_target_not_found():
+    respx.post(f"{BASE}/getPageSource").mock(
+        return_value=httpx.Response(410, text="", headers={"X-Origin-Status": "410"})
+    )
+    async with AsyncClient(api_key="test-key") as su:
+        with pytest.raises(TargetNotFoundError) as info:
+            await su.get_page_source("https://example.com/gone")
+    assert info.value.origin_status == 410
+    assert info.value.html == ""
 
 
 @respx.mock
