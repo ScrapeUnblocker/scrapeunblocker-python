@@ -195,7 +195,12 @@ class AsyncClient:
         proxy_country: Optional[str] = None,
         time_sleep: Optional[int] = None,
     ) -> ParsedPage:
-        """Fetch a URL and return structured JSON instead of HTML."""
+        """Fetch a URL and return structured JSON instead of HTML.
+
+        See :meth:`scrapeunblocker.Client.get_parsed`. Raises
+        :class:`~scrapeunblocker.NoDataExtractedError` (not billed) when the
+        page held no structured data.
+        """
         params = _base.build_params(
             url=url,
             parsed_data=True,

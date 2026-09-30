@@ -242,6 +242,34 @@ class StepFailedError(ValidationError):
         self.html = html
 
 
+class NoDataExtractedError(ValidationError):
+    """The page rendered but no structured data came out of it (HTTP 422).
+
+    Raised by ``get_parsed()`` when the API loaded the page but could not
+    extract any structured fields from it. The API answers 422 with a JSON
+    body of ``{"error": "no_data_extracted", "detail": ...}``. The call is not
+    billed and retrying returns the same answer; call ``get_page_source()`` to
+    get the HTML instead.
+
+    Attributes:
+        detail: The API's explanation from the response body.
+
+    It derives from :class:`ValidationError` (itself a 422), so existing
+    ``except ValidationError`` handlers keep catching it.
+    """
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        status_code: int,
+        body: Optional[str] = None,
+        detail: Optional[str] = None,
+    ):
+        super().__init__(message, status_code=status_code, body=body)
+        self.detail = detail
+
+
 class BlockedError(APIError):
     """The target site blocked every available bypass path (HTTP 403).
 

@@ -20,6 +20,7 @@ from .exceptions import (
     BrowserTimeoutError,
     CreditLimitExceededError,
     InvalidRequestError,
+    NoDataExtractedError,
     NoSubscriptionError,
     NotFoundError,
     PaymentFailedError,
@@ -106,6 +107,9 @@ def raise_for_status(response: httpx.Response) -> None:
         step_error = _step_failed_error(body)
         if step_error is not None:
             raise step_error
+        no_data_error = _no_data_extracted_error(body)
+        if no_data_error is not None:
+            raise no_data_error
         raise ValidationError(message, status_code=status, body=body)
     if status == 429:
         raise RateLimitError(message, status_code=status, body=body)
@@ -153,6 +157,34 @@ def _target_not_found_error(
         origin_status=origin_status,
         html=html,
         destination_url=response.headers.get("x-destination-url"),
+    )
+
+
+def _no_data_extracted_error(body: Optional[str]) -> Optional[NoDataExtractedError]:
+    """Build a :class:`NoDataExtractedError` from a ``no_data_extracted`` 422.
+
+    ``parsed_data`` answers 422 with ``{"error": "no_data_extracted",
+    "detail"}`` when the page rendered but held no structured data. Anything
+    else returns None so the caller falls back to :class:`ValidationError`.
+    """
+    try:
+        data = json.loads(body or "")
+    except (ValueError, TypeError):
+        return None
+    if not isinstance(data, dict) or data.get("error") != "no_data_extracted":
+        return None
+    detail = data.get("detail")
+    message = detail if isinstance(detail, str) and detail else (
+        "The page was rendered, but no structured data could be extracted "
+        "from it. Not billed."
+    )
+    if "not billed" not in message.lower():
+        message = f"{message} Not billed."
+    return NoDataExtractedError(
+        message,
+        status_code=422,
+        body=body,
+        detail=detail if isinstance(detail, str) else None,
     )
 
 

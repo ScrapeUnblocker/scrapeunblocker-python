@@ -14,6 +14,7 @@ from scrapeunblocker import (
     Client,
     CreditLimitExceededError,
     InvalidRequestError,
+    NoDataExtractedError,
     NoSubscriptionError,
     NotFoundError,
     ParsedPage,
@@ -495,6 +496,69 @@ def test_target_not_found_with_cookies_exposes_the_html():
             su.get_page_with_cookies("https://example.com/gone")
     assert info.value.html == "<html>gone</html>"
     assert info.value.body == body
+
+
+@respx.mock
+def test_target_not_found_with_parsed_data_has_no_html():
+    body = json.dumps({"data": {"page_type": "not_found", "data": {}}})
+    respx.post(f"{BASE}/getPageSource").mock(
+        return_value=httpx.Response(404, text=body, headers={"X-Origin-Status": "404"})
+    )
+    with make_client() as su:
+        with pytest.raises(TargetNotFoundError) as info:
+            su.get_parsed("https://example.com/gone")
+    # The body is the parsed-data JSON, not the target's page: html stays None
+    # instead of handing back JSON as if it were HTML.
+    assert info.value.html is None
+    assert info.value.body == body
+    assert info.value.origin_status == 404
+
+
+NO_DATA = json.dumps({
+    "error": "no_data_extracted",
+    "detail": "The page was rendered, but no structured data could be extracted "
+              "from it. Not billed. Call without parsed_data to get the HTML.",
+})
+
+
+@respx.mock
+def test_no_data_extracted_raises_a_typed_error():
+    route = respx.post(f"{BASE}/getPageSource").mock(
+        return_value=httpx.Response(422, text=NO_DATA)
+    )
+    with make_client() as su:
+        with pytest.raises(NoDataExtractedError) as info:
+            su.get_parsed("https://example.com")
+    err = info.value
+    assert err.status_code == 422
+    assert "Not billed" in str(err)
+    assert err.detail.startswith("The page was rendered")
+    # A ValidationError, so existing handlers keep catching it...
+    assert isinstance(err, ValidationError)
+    assert not isinstance(err, StepFailedError)
+    # ...and never retried: the same page yields the same result.
+    assert route.call_count == 1
+
+
+@respx.mock
+def test_no_data_extracted_without_detail_still_says_not_billed():
+    respx.post(f"{BASE}/getPageSource").mock(
+        return_value=httpx.Response(422, text=json.dumps({"error": "no_data_extracted"}))
+    )
+    with make_client() as su:
+        with pytest.raises(NoDataExtractedError) as info:
+            su.get_parsed("https://example.com")
+    assert "Not billed" in str(info.value)
+    assert info.value.detail is None
+
+
+@respx.mock
+@pytest.mark.asyncio
+async def test_async_no_data_extracted():
+    respx.post(f"{BASE}/getPageSource").mock(return_value=httpx.Response(422, text=NO_DATA))
+    async with AsyncClient(api_key="test-key") as su:
+        with pytest.raises(NoDataExtractedError):
+            await su.get_parsed("https://example.com")
 
 
 @respx.mock
