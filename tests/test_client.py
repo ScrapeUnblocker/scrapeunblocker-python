@@ -189,6 +189,44 @@ def test_get_parsed_returns_parsed_page():
     assert isinstance(result, ParsedPage)
     assert result.page_type == "product"
     assert result.data == {"price": 10}
+    assert result.data_extracted is True
+    assert result.html is None
+    assert result.detail is None
+
+
+EMPTY_PARSE = {
+    "data": {"page_type": "unknown", "data": {}},
+    "data_extracted": False,
+    "detail": "The page was rendered, but no structured data could be extracted "
+              "from it. The rendered HTML is in `html`.",
+    "html": "<html>\n <body>\n  <h1>\n   Example\n  </h1>\n </body>\n</html>",
+}
+
+
+@respx.mock
+def test_get_parsed_with_no_data_returns_the_page():
+    route = respx.post(f"{BASE}/getPageSource").mock(
+        return_value=httpx.Response(200, json=EMPTY_PARSE)
+    )
+    with make_client() as su:
+        result = su.get_parsed("https://example.com")
+    assert isinstance(result, ParsedPage)
+    assert result.data_extracted is False
+    assert result.page_type == "unknown"
+    assert result.data == {}
+    assert "Example" in result.html
+    assert result.detail.startswith("The page was rendered")
+    assert route.call_count == 1
+
+
+@respx.mock
+@pytest.mark.asyncio
+async def test_async_get_parsed_with_no_data_returns_the_page():
+    respx.post(f"{BASE}/getPageSource").mock(return_value=httpx.Response(200, json=EMPTY_PARSE))
+    async with AsyncClient(api_key="test-key") as su:
+        result = await su.get_parsed("https://example.com")
+    assert result.data_extracted is False
+    assert "Example" in result.html
 
 
 @respx.mock
@@ -521,6 +559,7 @@ NO_DATA = json.dumps({
 })
 
 
+# Legacy: the API no longer sends this 422, but its mapping stays in place.
 @respx.mock
 def test_no_data_extracted_raises_a_typed_error():
     route = respx.post(f"{BASE}/getPageSource").mock(

@@ -15,12 +15,20 @@ class ParsedPage:
         source: How the data was extracted (Schema.org, __NEXT_DATA__, AI rules).
         data: The extracted fields as a plain dict.
         raw: The full JSON payload as returned by the API.
+        data_extracted: ``False`` when the page rendered but no structured
+            data could be extracted from it (``data`` is then empty).
+        html: The rendered page when ``data_extracted`` is ``False``,
+            otherwise ``None``.
+        detail: The API's explanation when ``data_extracted`` is ``False``.
     """
 
     page_type: Optional[str]
     source: Optional[str]
     data: Any
     raw: Dict[str, Any]
+    data_extracted: bool = True
+    html: Optional[str] = None
+    detail: Optional[str] = None
 
     @classmethod
     def from_response(cls, payload: Dict[str, Any]) -> "ParsedPage":
@@ -30,6 +38,9 @@ class ParsedPage:
             source=inner.get("source"),
             data=inner.get("data"),
             raw=payload,
+            data_extracted=payload.get("data_extracted") is not False,
+            html=payload.get("html"),
+            detail=payload.get("detail"),
         )
 
 

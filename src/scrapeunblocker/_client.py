@@ -267,10 +267,11 @@ class Client:
 
         Returns:
             A :class:`ParsedPage` with ``page_type``, ``source`` and ``data``.
+            When the page rendered but held no structured data, ``data`` is
+            empty, ``data_extracted`` is ``False`` and ``html`` carries the
+            rendered page (billed like any delivered page).
 
         Raises:
-            NoDataExtractedError: The page rendered but held no structured
-                data (not billed). Use :meth:`get_page_source` for the HTML.
             TargetNotFoundError: The target page itself answered 404 or 410
                 (billed). ``.html`` is ``None`` here - the body is JSON.
         """

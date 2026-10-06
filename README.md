@@ -316,7 +316,6 @@ except UpstreamOutageError:
 | `UnsupportedContentError` | 415 | The URL serves something other than HTML |
 | `ValidationError` | 422 | Missing or wrong-typed parameter; `body` holds the `detail` array |
 | `StepFailedError` | 422 | A browser `steps` action failed; carries `step_index`, `action`, `reason`, `selector`, `html` (subclass of `ValidationError`) |
-| `NoDataExtractedError` | 422 | `get_parsed()`: the page rendered but held no structured data; carries `detail` (subclass of `ValidationError`, not billed) |
 | `RateLimitError` | 429 | Too many requests |
 | `UpstreamOutageError` | 503 | The target origin is down |
 | `ServerError` | 5xx | Unexpected server error, including a 504 upstream timeout |
@@ -342,22 +341,21 @@ except TargetNotFoundError as e:
 
 With `get_parsed()` the body is the parsed-data JSON (`{"data": {"page_type": "not_found", ...}}`), so `html` is `None` there; the raw JSON is on `.body`.
 
-### No structured data on the page (422)
+### No structured data on the page
 
-When `get_parsed()` renders the page but can extract no structured data from it, the API answers 422 and the client raises `NoDataExtractedError`. The call is **not billed**, and retrying gives the same result - fetch the HTML with `get_page_source()` instead:
+When `get_parsed()` renders the page but can extract no structured data from it, the API still answers 200 and the client returns a normal `ParsedPage`: `data` is empty, `data_extracted` is `False`, `detail` says why, and `html` carries the rendered page. The call is billed like any delivered page, so you already have the HTML - no second call needed:
 
 ```python
-from scrapeunblocker import Client, NoDataExtractedError
+from scrapeunblocker import Client
 
 su = Client()
-try:
-    page = su.get_parsed("https://example.com/some-page")
-except NoDataExtractedError as e:
-    print(e.detail)                                   # the API's explanation
-    html = su.get_page_source("https://example.com/some-page")
+page = su.get_parsed("https://example.com/some-page")
+if not page.data_extracted:
+    print(page.detail)      # the API's explanation
+    html = page.html        # the rendered page, parse it yourself
 ```
 
-`NoDataExtractedError` subclasses `ValidationError`, so `except ValidationError` catches it too.
+On a successful parse `data_extracted` is `True` and `html` is `None`. Up to 0.7.1 this case raised `NoDataExtractedError` (a 422); the API no longer sends that, and the class stays exported only so existing imports keep working.
 
 Every one of these subclasses `ScrapeUnblockerError`, so a single `except ScrapeUnblockerError` still catches everything, and the 402 and 401 subclasses can be caught by their base class when you do not need to tell them apart.
 

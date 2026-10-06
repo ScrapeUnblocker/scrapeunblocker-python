@@ -243,13 +243,14 @@ class StepFailedError(ValidationError):
 
 
 class NoDataExtractedError(ValidationError):
-    """The page rendered but no structured data came out of it (HTTP 422).
+    """Deprecated: the API no longer sends this 422.
 
-    Raised by ``get_parsed()`` when the API loaded the page but could not
-    extract any structured fields from it. The API answers 422 with a JSON
-    body of ``{"error": "no_data_extracted", "detail": ...}``. The call is not
-    billed and retrying returns the same answer; call ``get_page_source()`` to
-    get the HTML instead.
+    A page that rendered but held no structured data now comes back from
+    ``get_parsed()`` as a normal :class:`~scrapeunblocker.ParsedPage` with
+    ``data_extracted=False`` and the page on ``html`` (a billed 200). The
+    class stays exported so existing ``except NoDataExtractedError`` handlers
+    keep importing; it is raised only for a legacy 422 body of
+    ``{"error": "no_data_extracted", "detail": ...}``.
 
     Attributes:
         detail: The API's explanation from the response body.

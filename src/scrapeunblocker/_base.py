@@ -161,11 +161,11 @@ def _target_not_found_error(
 
 
 def _no_data_extracted_error(body: Optional[str]) -> Optional[NoDataExtractedError]:
-    """Build a :class:`NoDataExtractedError` from a ``no_data_extracted`` 422.
+    """Build a :class:`NoDataExtractedError` from a legacy ``no_data_extracted`` 422.
 
-    ``parsed_data`` answers 422 with ``{"error": "no_data_extracted",
-    "detail"}`` when the page rendered but held no structured data. Anything
-    else returns None so the caller falls back to :class:`ValidationError`.
+    The API now answers an empty parse with a 200 (``data_extracted: false``);
+    this only maps the old 422 body, should one still arrive. Anything else
+    returns None so the caller falls back to :class:`ValidationError`.
     """
     try:
         data = json.loads(body or "")

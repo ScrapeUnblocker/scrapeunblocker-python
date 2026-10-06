@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.8.0 (2026-10-06)
+
+- `get_parsed()` (and its async twin) on a page that rendered but held no structured data now returns a normal `ParsedPage` instead of raising `NoDataExtractedError`. The API answers this case with a billed 200: `data` is empty, the new `data_extracted` attribute is `False`, `detail` explains it and the new `html` attribute carries the rendered page, so no second call is needed. On a successful parse `data_extracted` is `True` and `html` / `detail` are `None`.
+- `NoDataExtractedError` is deprecated: the API no longer sends the 422 `no_data_extracted`. The class stays exported so existing imports keep working.
+
+Behaviour change: code that caught `NoDataExtractedError` should check `page.data_extracted` instead.
+
 ## 0.7.1 (2026-09-30)
 
 - New `NoDataExtractedError` (a subclass of `ValidationError`): raised by `get_parsed()` (and its async twin) when the page rendered but no structured data could be extracted from it. The API answers 422 with `{"error": "no_data_extracted", "detail": ...}`; the error carries `detail`. The call is not billed and is never retried - use `get_page_source()` for the HTML. Before, this came back as a billed 200 with empty `data`.
