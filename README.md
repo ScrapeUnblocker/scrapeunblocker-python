@@ -109,7 +109,6 @@ Pass a URL and get back structured data extracted via Schema.org, `__NEXT_DATA__
 ```python
 result = su.get_parsed("https://www.walmart.com/ip/12345")
 print(result.page_type)    # e.g. "product"
-print(result.source)       # how it was extracted
 print(result.data)         # the fields
 
 # If a parse ever comes back wrong, force a fresh set of rules:
