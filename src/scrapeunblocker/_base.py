@@ -18,6 +18,7 @@ from .exceptions import (
     AuthenticationError,
     BlockedError,
     BrowserTimeoutError,
+    BudgetExceededError,
     CreditLimitExceededError,
     InvalidRequestError,
     NoDataExtractedError,
@@ -233,7 +234,7 @@ def _auth_error_class(body: Optional[str]) -> Type[AuthenticationError]:
 def _billing_error_class(body: Optional[str]) -> Type[PaymentRequiredError]:
     """Pick the 402 subclass from the response body.
 
-    The three billing blocks share a status code and differ only in their
+    The four billing blocks share a status code and differ only in their
     plain-text body. An unrecognised body falls back to the general
     PaymentRequiredError rather than guessing.
     """
@@ -242,6 +243,8 @@ def _billing_error_class(body: Optional[str]) -> Type[PaymentRequiredError]:
         return QuotaExceededError
     if "credit limit exceeded" in text:
         return CreditLimitExceededError
+    if "user set budget exceeded" in text:
+        return BudgetExceededError
     if "payment failed" in text:
         return PaymentFailedError
     return PaymentRequiredError
@@ -254,7 +257,7 @@ def _message_for(status: int, body: Optional[str]) -> str:
     base = {
         400: "Invalid request (bad URL, unsupported scheme, or missing API key header)",
         401: "Authentication failed - key not recognised, or account has no active plan",
-        402: "Billing block - quota exceeded, credit limit exceeded, or a failed payment",
+        402: "Billing block - quota exceeded, credit limit exceeded, monthly budget limit reached, or a failed payment",
         403: "Target blocked by bot protection on every bypass path",
         404: "Requested element not found on the page",
         408: "Browser run timed out before the page was ready",

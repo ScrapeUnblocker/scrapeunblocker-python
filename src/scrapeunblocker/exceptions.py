@@ -61,17 +61,19 @@ class PaymentRequiredError(APIError):
     """The account has a billing problem (HTTP 402).
 
     Your credentials are fine - the request was stopped for a billing reason.
-    There are three of them, each raised as a dedicated subclass so you can
-    react to them separately, or catch ``PaymentRequiredError`` for all three:
+    There are four of them, each raised as a dedicated subclass so you can
+    react to them separately, or catch ``PaymentRequiredError`` for all four:
 
     * :class:`QuotaExceededError` - ``Quota exceeded``
     * :class:`CreditLimitExceededError` - ``Credit limit exceeded``
+    * :class:`BudgetExceededError` - ``User set budget exceeded``
     * :class:`PaymentFailedError` - ``Payment failed - update payment method``
 
     When more than one applies, the most serious wins: failed payment
-    outranks credit limit, which outranks quota. All three resolve
-    themselves once the underlying billing state changes - access returns
-    within roughly a minute, with no key change needed.
+    outranks credit limit, which outranks quota, which outranks your own
+    budget limit. All four resolve themselves once the underlying billing
+    state changes - access returns within roughly a minute, with no key
+    change needed.
 
     Like a 401, a 402 is refused before anything is scraped, so it is never
     billed and consumes no quota. Retrying it is pointless; fix the billing
@@ -99,6 +101,21 @@ class CreditLimitExceededError(PaymentRequiredError):
     metered usage already consumed but not yet invoiced. Outstanding invoices
     are finalised and charged automatically when this triggers, so with a
     working card it usually clears itself within about a minute.
+    """
+
+
+class BudgetExceededError(PaymentRequiredError):
+    """The account reached the monthly budget limit you set (HTTP 402).
+
+    Raised when the API answers a 402 with ``User set budget exceeded``. The
+    limit is set in your profile (EUR, excluding VAT) and spend is counted the
+    way the invoice is: the plan's fixed monthly fee, if any, plus the
+    requests billed on top of it. Requests paid from coupon credit do not
+    count.
+
+    The key works again at the start of the next billing period, or within
+    about a minute after you raise or remove the limit at
+    https://app.scrapeunblocker.com/dashboard/profile.
     """
 
 

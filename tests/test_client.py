@@ -11,6 +11,7 @@ from scrapeunblocker import (
     AuthenticationError,
     BlockedError,
     BrowserTimeoutError,
+    BudgetExceededError,
     Client,
     CreditLimitExceededError,
     InvalidRequestError,
@@ -639,6 +640,7 @@ async def test_async_target_not_found():
     [
         ("Quota exceeded\n", QuotaExceededError),
         ("Credit limit exceeded\n", CreditLimitExceededError),
+        ("User set budget exceeded\n", BudgetExceededError),
         ("Payment failed - update payment method\n", PaymentFailedError),
         ("something new we do not know yet", PaymentRequiredError),
     ],
