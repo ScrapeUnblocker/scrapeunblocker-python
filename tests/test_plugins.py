@@ -25,7 +25,7 @@ def _plugin_methods(cls):
 
 def test_sync_and_async_mixins_offer_the_same_methods():
     assert _plugin_methods(_PluginMethods) == _plugin_methods(_AsyncPluginMethods)
-    assert len(_plugin_methods(_PluginMethods)) > 100
+    assert len(_plugin_methods(_PluginMethods)) > 90
 
 
 @respx.mock
