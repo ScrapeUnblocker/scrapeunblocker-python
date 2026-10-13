@@ -11,6 +11,7 @@ import httpx
 from . import _base
 from .exceptions import ConnectionError as SUConnectionError
 from .exceptions import ScrapeTimeoutError
+from ._plugins import _AsyncPluginMethods
 from .models import PageResult, ParsedPage
 from .version import __version__
 
@@ -75,7 +76,7 @@ class _AsyncSouthwestNamespace:
         )
 
 
-class AsyncClient:
+class AsyncClient(_AsyncPluginMethods):
     """Async client for the ScrapeUnblocker API.
 
     Mirrors :class:`~scrapeunblocker.Client`; every method is a coroutine.

@@ -11,6 +11,7 @@ import httpx
 from . import _base
 from .exceptions import ConnectionError as SUConnectionError
 from .exceptions import ScrapeTimeoutError
+from ._plugins import _PluginMethods
 from .models import PageResult, ParsedPage
 from .version import __version__
 
@@ -89,7 +90,7 @@ class _SouthwestNamespace:
         )
 
 
-class Client:
+class Client(_PluginMethods):
     """Client for the ScrapeUnblocker API.
 
     Args:

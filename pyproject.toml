@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "scrapeunblocker"
-version = "0.9.0"
-description = "Official Python client for the ScrapeUnblocker web scraping API - JS-rendered pages that bypass Cloudflare, DataDome, PerimeterX and Akamai, plus Google SERP and Skyscanner flights/hotels/car-hire scraping as JSON."
+version = "0.10.0"
+description = "Official Python client for the ScrapeUnblocker web scraping API - JS-rendered pages that bypass Cloudflare, DataDome, PerimeterX and Akamai, plus Google SERP and 100+ ready-made site plugins (Amazon, Walmart, Zillow, Google Trends, Skyscanner, Booking.com and more) that return JSON."
 readme = "README.md"
 requires-python = ">=3.8"
 license = "MIT"
@@ -31,6 +31,10 @@ keywords = [
     "car hire",
     "travel data",
     "serp api",
+    "amazon scraper",
+    "google trends api",
+    "zillow scraper",
+    "ecommerce scraping",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
