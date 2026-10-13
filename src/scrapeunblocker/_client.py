@@ -71,7 +71,7 @@ class _SouthwestNamespace:
             return_date: Inbound date as ``YYYY-MM-DD``. Omit for one-way.
             adults: Number of adult passengers (1-8).
             fare_type: Price the fares in ``"dollars"`` or ``"points"``.
-            proxy_country: Exit-IP country (ISO-2); Southwest is US-only.
+            proxy_country: Proxy country (ISO-2); Southwest is US-only.
             max_attempts: How many times the API retries the booking flow (1-5).
 
         Returns:
@@ -346,7 +346,7 @@ class Client(_PluginMethods):
 
         Args:
             keyword: The search phrase, e.g. "coffee shops in chicago".
-            proxy_country: Exit-IP country (ISO-2). Local results are
+            proxy_country: Proxy country (ISO-2). Local results are
                 location-sensitive, so set the market you want.
             gl: Google country of search (ISO-2 lowercase, e.g. "us").
             hl: Google UI language (e.g. "en", "de").
@@ -450,7 +450,7 @@ class Client(_PluginMethods):
             page_size: Products per page (max 60).
             sort: Ordering: ``"default"``, ``"price_asc"``, ``"price_desc"``
                 or ``"best_selling"``.
-            proxy_country: Exit-IP country (ISO-2).
+            proxy_country: Proxy country (ISO-2).
         """
         return self._post_json(
             "/goods/oopbuy-search",
@@ -504,7 +504,7 @@ class Client(_PluginMethods):
             free_shipping: Keep only listings eBay marks as free delivery.
             seller: Restrict the search to one seller's username.
             category: eBay category id to search inside, e.g. ``"131090"``.
-            proxy_country: Exit-IP country (ISO-2).
+            proxy_country: Proxy country (ISO-2).
         """
         return self._post_json(
             "/marketplace/ebay-search",
@@ -537,7 +537,7 @@ class Client(_PluginMethods):
         savings, availability, rating, review count, seller, feature bullets,
         categories and images. Prices come back in the marketplace's own
         currency: ``proxy_country`` defaults to the marketplace's home country
-        (amazon.com -> US) so the exit is pinned there over the ISP pool.
+        (amazon.com -> US).
 
         Args:
             asin: 10-char product id, e.g. ``"B0BSHF7WHW"`` (books use their
@@ -546,7 +546,7 @@ class Client(_PluginMethods):
                 are read from it.
             marketplace: Regional Amazon site, e.g. ``"amazon.com"``,
                 ``"amazon.de"``.
-            proxy_country: Exit-IP country (ISO-2). Defaults to the
+            proxy_country: Proxy country (ISO-2). Defaults to the
                 marketplace's home country.
         """
         return self._post_json(
@@ -584,7 +584,7 @@ class Client(_PluginMethods):
                 ``"avg_review"`` or ``"newest"``.
             min_price: Lowest price to include, in the marketplace's currency.
             max_price: Highest price to include, in the marketplace's currency.
-            proxy_country: Exit-IP country (ISO-2). Defaults to the
+            proxy_country: Proxy country (ISO-2). Defaults to the
                 marketplace's home country.
         """
         return self._post_json(
@@ -621,7 +621,7 @@ class Client(_PluginMethods):
                 more scrolls the real grid in a browser session (10-30 s).
             video_details: Read each widget-listed video's own page for exact
                 engagement, hashtags, music and media URLs.
-            proxy_country: Exit-IP country (ISO-2); only for region-locked items.
+            proxy_country: Proxy country (ISO-2); only for region-locked items.
         """
         return self._post_json(
             "/social/tiktok-profile",
@@ -655,7 +655,7 @@ class Client(_PluginMethods):
             include_transcript: Also return the subtitle track as text.
             transcript_language: Preferred subtitle language when several
                 exist, e.g. ``"eng-US"`` or just ``"eng"``.
-            proxy_country: Exit-IP country (ISO-2).
+            proxy_country: Proxy country (ISO-2).
         """
         return self._post_json(
             "/social/tiktok-video",
@@ -680,7 +680,7 @@ class Client(_PluginMethods):
             max_videos: Videos to include, 0-200. ``0`` is totals only.
             video_details: Read each widget-listed video's own page for the
                 full video shape.
-            proxy_country: Exit-IP country (ISO-2).
+            proxy_country: Proxy country (ISO-2).
         """
         return self._post_json(
             "/social/tiktok-hashtag",
@@ -706,7 +706,7 @@ class Client(_PluginMethods):
         Args:
             query: Search keywords, e.g. ``"space telescope"``.
             max_results: Videos to return, 1-200 (about 12 per scroll).
-            proxy_country: Exit-IP country (ISO-2) - the region TikTok ranks for.
+            proxy_country: Proxy country (ISO-2) - the region TikTok ranks for.
         """
         return self._post_json(
             "/social/tiktok-search",
@@ -732,7 +732,7 @@ class Client(_PluginMethods):
         Args:
             url: Video / photo-post URL, bare id or short link.
             max_comments: Top-level comments to return, 1-500 (20 per scroll).
-            proxy_country: Exit-IP country (ISO-2).
+            proxy_country: Proxy country (ISO-2).
         """
         return self._post_json(
             "/social/tiktok-comments",

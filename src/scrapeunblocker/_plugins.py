@@ -802,7 +802,7 @@ class _PluginMethods:
 
     def tiktok_shop_search(
         self,
-        q: str,
+        q: Optional[str] = None,
         *,
         category: Optional[str] = None,
         max_results: Optional[int] = None,
@@ -1572,6 +1572,7 @@ class _PluginMethods:
     def aldi_au_specials(
         self,
         *,
+        category: Optional[str] = None,
         theme: Optional[str] = None,
         sort: Optional[str] = None,
         page: Optional[int] = None,
@@ -1597,6 +1598,13 @@ class _PluginMethods:
         collect up to `max_results` from `page` on, billed one unit per page.
 
         Args:
+            category: mode=category: a category link
+                (https://www.aldi.com.au/products/dairy-eggs-
+                fridge/milk/k/1111111160) or its key ('1111111160';
+                '1588161425841179' = Lower Prices). mode=specials: the Special
+                Buys drop - its date ('2026-10-14') or link
+                (https://www.aldi.com.au/special-buys/2026-10-14); blank = the
+                current drop.
             theme: mode=specials: one theme of the drop, e.g. 'Gardening' (see
                 `promotions[].themes`).
             sort: Listing order: relevance, price_asc, price_desc, name_asc,
@@ -1614,6 +1622,7 @@ class _PluginMethods:
         return self._post_json(
             "/groceries/aldi-au",
             mode='specials',
+            category=category,
             theme=theme,
             sort=sort,
             page=page,
@@ -4030,7 +4039,6 @@ class _PluginMethods:
         self,
         query: str,
         *,
-        page: Optional[int] = None,
         max_results: Optional[int] = None,
         proxy_country: Optional[str] = None,
     ) -> Any:
@@ -4062,9 +4070,6 @@ class _PluginMethods:
         Args:
             query: Product name or keyword to search for (mode=search), e.g.
                 'crm'.
-            page: 1-based review page to start from: 25 reviews per page, at
-                most 100 (Capterra's limit per product). Use the `nextPage` of
-                a previous response to continue. API default: 1.
             max_results: How many reviews to collect across pages (1-500,
                 default 25); each page fetched is one billed unit. With
                 mode=search, how many products (1-20, default 20; one page).
@@ -4077,7 +4082,6 @@ class _PluginMethods:
             "/reviews/capterra",
             mode='search',
             query=query,
-            page=page,
             max_results=max_results,
             proxy_country=proxy_country,
         )
@@ -4711,7 +4715,6 @@ class _PluginMethods:
         app_id: str,
         *,
         country: Optional[str] = None,
-        lang: Optional[str] = None,
         max_results: Optional[int] = None,
         sort: Optional[str] = None,
         page: Optional[int] = None,
@@ -4741,9 +4744,6 @@ class _PluginMethods:
             country: App Store country (ISO-2), e.g. 'us', 'gb', 'de'. Prices,
                 ratings and reviews are per country. Default: the country in an
                 app URL, else 'us'.
-            lang: Listing language for mode=app / mode=search, e.g. 'fr' or
-                'fr-CA' (for countries whose store has several languages).
-                Default: the store's own.
             max_results: mode=search: apps to return (1-200). mode=reviews:
                 reviews to collect (1-500); Apple serves 50 per page and at
                 most 10 pages per country, each page billed as one request. API
@@ -4764,7 +4764,6 @@ class _PluginMethods:
             mode='reviews',
             app_id=app_id,
             country=country,
-            lang=lang,
             max_results=max_results,
             sort=sort,
             page=page,
@@ -6347,7 +6346,7 @@ class _AsyncPluginMethods:
 
     async def tiktok_shop_search(
         self,
-        q: str,
+        q: Optional[str] = None,
         *,
         category: Optional[str] = None,
         max_results: Optional[int] = None,
@@ -7117,6 +7116,7 @@ class _AsyncPluginMethods:
     async def aldi_au_specials(
         self,
         *,
+        category: Optional[str] = None,
         theme: Optional[str] = None,
         sort: Optional[str] = None,
         page: Optional[int] = None,
@@ -7142,6 +7142,13 @@ class _AsyncPluginMethods:
         collect up to `max_results` from `page` on, billed one unit per page.
 
         Args:
+            category: mode=category: a category link
+                (https://www.aldi.com.au/products/dairy-eggs-
+                fridge/milk/k/1111111160) or its key ('1111111160';
+                '1588161425841179' = Lower Prices). mode=specials: the Special
+                Buys drop - its date ('2026-10-14') or link
+                (https://www.aldi.com.au/special-buys/2026-10-14); blank = the
+                current drop.
             theme: mode=specials: one theme of the drop, e.g. 'Gardening' (see
                 `promotions[].themes`).
             sort: Listing order: relevance, price_asc, price_desc, name_asc,
@@ -7159,6 +7166,7 @@ class _AsyncPluginMethods:
         return await self._post_json(
             "/groceries/aldi-au",
             mode='specials',
+            category=category,
             theme=theme,
             sort=sort,
             page=page,
@@ -9575,7 +9583,6 @@ class _AsyncPluginMethods:
         self,
         query: str,
         *,
-        page: Optional[int] = None,
         max_results: Optional[int] = None,
         proxy_country: Optional[str] = None,
     ) -> Any:
@@ -9607,9 +9614,6 @@ class _AsyncPluginMethods:
         Args:
             query: Product name or keyword to search for (mode=search), e.g.
                 'crm'.
-            page: 1-based review page to start from: 25 reviews per page, at
-                most 100 (Capterra's limit per product). Use the `nextPage` of
-                a previous response to continue. API default: 1.
             max_results: How many reviews to collect across pages (1-500,
                 default 25); each page fetched is one billed unit. With
                 mode=search, how many products (1-20, default 20; one page).
@@ -9622,7 +9626,6 @@ class _AsyncPluginMethods:
             "/reviews/capterra",
             mode='search',
             query=query,
-            page=page,
             max_results=max_results,
             proxy_country=proxy_country,
         )
@@ -10256,7 +10259,6 @@ class _AsyncPluginMethods:
         app_id: str,
         *,
         country: Optional[str] = None,
-        lang: Optional[str] = None,
         max_results: Optional[int] = None,
         sort: Optional[str] = None,
         page: Optional[int] = None,
@@ -10286,9 +10288,6 @@ class _AsyncPluginMethods:
             country: App Store country (ISO-2), e.g. 'us', 'gb', 'de'. Prices,
                 ratings and reviews are per country. Default: the country in an
                 app URL, else 'us'.
-            lang: Listing language for mode=app / mode=search, e.g. 'fr' or
-                'fr-CA' (for countries whose store has several languages).
-                Default: the store's own.
             max_results: mode=search: apps to return (1-200). mode=reviews:
                 reviews to collect (1-500); Apple serves 50 per page and at
                 most 10 pages per country, each page billed as one request. API
@@ -10309,7 +10308,6 @@ class _AsyncPluginMethods:
             mode='reviews',
             app_id=app_id,
             country=country,
-            lang=lang,
             max_results=max_results,
             sort=sort,
             page=page,
