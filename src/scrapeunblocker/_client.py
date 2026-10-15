@@ -367,6 +367,9 @@ class Client(_PluginMethods):
         pages: Optional[int] = None,
         gl: Optional[str] = None,
         max_results: Optional[int] = None,
+        time_range: Optional[str] = None,
+        date_from: Optional[str] = None,
+        date_to: Optional[str] = None,
     ) -> Any:
         """Search Google Images and return the image results as JSON.
 
@@ -384,6 +387,15 @@ class Client(_PluginMethods):
             gl: Optional Google market override (ISO-2 lowercase, e.g. "de").
                 Leave unset to follow ``proxy_country``.
             max_results: Optional cap on the number of results (1-500).
+            time_range: Only images Google found within this recent period:
+                ``"hour"``, ``"day"``, ``"week"``, ``"month"`` or ``"year"``.
+                On a scheduled scan, set it to the interval between scans to
+                get only the new images. Cannot be combined with
+                ``date_from`` / ``date_to``.
+            date_from: Only images Google found on or after this date
+                (``"YYYY-MM-DD"``). Works alone or with ``date_to``.
+            date_to: Only images Google found on or before this date
+                (``"YYYY-MM-DD"``). Works alone or with ``date_from``.
         """
         return self._post_json(
             "/images/google-search",
@@ -392,6 +404,9 @@ class Client(_PluginMethods):
             gl=gl,
             max_results=max_results,
             proxy_country=proxy_country,
+            time_range=time_range,
+            date_from=date_from,
+            date_to=date_to,
         )
 
     def meta_ad_library(

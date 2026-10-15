@@ -300,6 +300,47 @@ def test_google_images_pages():
 
 
 @respx.mock
+def test_google_images_time_range():
+    route = respx.post(f"{BASE}/images/google-search").mock(
+        return_value=httpx.Response(200, json={"results": []})
+    )
+    with make_client() as su:
+        su.google_images("eiffel tower", proxy_country="US", time_range="day")
+    url = str(route.calls.last.request.url)
+    assert "time_range=day" in url
+    assert "date_from" not in url
+    assert "date_to" not in url
+
+
+@respx.mock
+def test_google_images_date_window():
+    route = respx.post(f"{BASE}/images/google-search").mock(
+        return_value=httpx.Response(200, json={"results": []})
+    )
+    with make_client() as su:
+        su.google_images("eiffel tower", date_from="2026-10-01", date_to="2026-10-07")
+    url = str(route.calls.last.request.url)
+    assert "date_from=2026-10-01" in url
+    assert "date_to=2026-10-07" in url
+    assert "time_range" not in url
+
+
+@respx.mock
+async def test_async_google_images_time_params():
+    route = respx.post(f"{BASE}/images/google-search").mock(
+        return_value=httpx.Response(200, json={"results": []})
+    )
+    async with AsyncClient(api_key="test-key") as su:
+        await su.google_images("eiffel tower", time_range="week")
+        await su.google_images("eiffel tower", date_from="2026-10-01")
+    first = str(route.calls[0].request.url)
+    second = str(route.calls[1].request.url)
+    assert "time_range=week" in first
+    assert "date_from=2026-10-01" in second
+    assert "date_to" not in second
+
+
+@respx.mock
 def test_meta_ad_library():
     route = respx.post(f"{BASE}/ads/meta-ad-library").mock(
         return_value=httpx.Response(200, json={"results": []})

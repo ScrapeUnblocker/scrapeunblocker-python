@@ -274,6 +274,9 @@ class AsyncClient(_AsyncPluginMethods):
         pages: Optional[int] = None,
         gl: Optional[str] = None,
         max_results: Optional[int] = None,
+        time_range: Optional[str] = None,
+        date_from: Optional[str] = None,
+        date_to: Optional[str] = None,
     ) -> Any:
         """Search Google Images and return the image results as JSON."""
         return await self._post_json(
@@ -283,6 +286,9 @@ class AsyncClient(_AsyncPluginMethods):
             gl=gl,
             max_results=max_results,
             proxy_country=proxy_country,
+            time_range=time_range,
+            date_from=date_from,
+            date_to=date_to,
         )
 
     async def meta_ad_library(
