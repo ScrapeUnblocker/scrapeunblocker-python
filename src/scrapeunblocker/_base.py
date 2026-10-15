@@ -261,7 +261,7 @@ def _message_for(status: int, body: Optional[str]) -> str:
         403: "Target blocked by bot protection on every bypass path",
         404: "Requested element not found on the page",
         408: "Browser run timed out before the page was ready",
-        415: "URL does not serve HTML",
+        415: "URL serves a content type this call cannot return",
         422: "Validation error - see the detail array in the response body",
         429: "Rate limited - too many requests",
         503: "Upstream origin returned a server-side outage page",

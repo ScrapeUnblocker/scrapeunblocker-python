@@ -145,19 +145,18 @@ class InvalidRequestError(APIError):
 class NotFoundError(APIError):
     """Something the call asked for does not exist (HTTP 404).
 
-    ``get_image()`` raises it when the page rendered fine but contained no
-    ``<img>`` tag, and plugin methods raise it when the item they look up
-    (a product, a profile) does not exist. When the *target page itself*
-    answered 404 or 410, the more specific :class:`TargetNotFoundError`
-    subclass is raised instead.
+    Plugin methods raise it when the item they look up (a product, a
+    profile) does not exist. When the *target page itself* answered 404 or
+    410, the more specific :class:`TargetNotFoundError` subclass is raised
+    instead.
     """
 
 
 class TargetNotFoundError(NotFoundError):
     """The target page itself does not exist (HTTP 404 or 410).
 
-    Raised by ``get_page_source()`` / ``get_parsed()`` when the site you asked
-    for answered 404 or 410 on its own. The API passes that status through and
+    Raised by ``get_page_source()`` / ``get_parsed()`` / ``get_image()`` when
+    the site you asked for answered 404 or 410 on its own. The API passes that status through and
     marks it with the ``X-Origin-Status`` header, which is how this is told
     apart from an API-side 404. It is the target's final answer, not a block,
     so it is never retried - and the call is billed, because the page was
@@ -197,10 +196,12 @@ class BrowserTimeoutError(APIError):
 
 
 class UnsupportedContentError(APIError):
-    """The URL serves something other than HTML (HTTP 415).
+    """The URL serves a content type the call cannot return (HTTP 415).
 
-    The message names the content type that was found. For images, use
-    ``get_image()`` instead of ``get_page_source()``.
+    ``get_page_source()`` raises it for something other than HTML (for
+    images, use ``get_image()``); ``get_image()`` raises it for something
+    other than an image, such as a page URL. The message names the content
+    type that was found.
     """
 
 

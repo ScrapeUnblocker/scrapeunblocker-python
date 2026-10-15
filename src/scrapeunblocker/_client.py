@@ -744,7 +744,14 @@ class Client(_PluginMethods):
     def get_image(
         self, url: str, *, proxy_country: Optional[str] = None
     ) -> bytes:
-        """Fetch an image URL through the bypass chain and return its bytes."""
+        """Fetch an image and return its bytes exactly as the image host
+        serves them - the original format (JPEG, PNG, WebP, AVIF, GIF, SVG,
+        ...), nothing re-encoded.
+
+        ``url`` must point at the image itself: a page URL raises
+        :class:`UnsupportedContentError`, and an image the host answers 404
+        or 410 for raises :class:`TargetNotFoundError`.
+        """
         params = _base.build_params(url=url, proxy_country=proxy_country)
         response = self._request("/getImage", params)
         return response.content

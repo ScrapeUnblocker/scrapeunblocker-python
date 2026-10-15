@@ -408,6 +408,27 @@ def test_get_image_returns_bytes():
 
 
 @respx.mock
+def test_get_image_dead_image_raises_target_not_found():
+    respx.post(f"{BASE}/getImage").mock(
+        return_value=httpx.Response(404, content=b"", headers={"X-Origin-Status": "404"})
+    )
+    with make_client() as su:
+        with pytest.raises(TargetNotFoundError) as exc:
+            su.get_image("https://example.com/gone.jpg")
+    assert exc.value.origin_status == 404
+
+
+@respx.mock
+def test_get_image_page_url_raises_unsupported_content():
+    respx.post(f"{BASE}/getImage").mock(
+        return_value=httpx.Response(415, text="The URL returned text/html, not an image.")
+    )
+    with make_client() as su:
+        with pytest.raises(UnsupportedContentError):
+            su.get_image("https://example.com/product/1")
+
+
+@respx.mock
 def test_skyscanner_flights():
     route = respx.post(f"{BASE}/flights/skyscanner-quotes").mock(
         return_value=httpx.Response(200, json={"itineraries": []})

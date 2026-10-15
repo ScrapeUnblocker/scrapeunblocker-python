@@ -248,6 +248,8 @@ data = su.get_image("https://example.com/photo.jpg")
 open("photo.jpg", "wb").write(data)
 ```
 
+The bytes come back exactly as the image host serves them, in the original format (JPEG, PNG, WebP, AVIF, GIF, SVG, ...); nothing is re-encoded. Pass the image URL itself, not the page it sits on.
+
 ## Skyscanner plugins
 
 ```python
@@ -314,10 +316,10 @@ except UpstreamOutageError:
 | `BudgetExceededError` | 402 | This period's spend reached the monthly budget limit you set in your profile |
 | `PaymentFailedError` | 402 | A card payment was declined three times |
 | `BlockedError` | 403 | Blocked by bot protection on every path |
-| `NotFoundError` | 404 | What you asked for does not exist - no image on the page (`get_image`), or a plugin lookup found nothing |
+| `NotFoundError` | 404 | What you asked for does not exist - a plugin lookup found nothing |
 | `TargetNotFoundError` | 404 / 410 | The target page itself does not exist; carries `origin_status`, `html`, `destination_url` (subclass of `NotFoundError`, billed) |
 | `BrowserTimeoutError` | 408 | Our browser run timed out before the page was ready |
-| `UnsupportedContentError` | 415 | The URL serves something other than HTML |
+| `UnsupportedContentError` | 415 | The URL serves something other than HTML (`get_page_source`) or other than an image (`get_image`) |
 | `ValidationError` | 422 | Missing or wrong-typed parameter; `body` holds the `detail` array |
 | `StepFailedError` | 422 | A browser `steps` action failed; carries `step_index`, `action`, `reason`, `selector`, `html` (subclass of `ValidationError`) |
 | `RateLimitError` | 429 | Too many requests |
