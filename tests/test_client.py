@@ -925,3 +925,23 @@ def test_tiktok_search_and_comments():
         assert su.tiktok_comments("7665075736742530317", max_comments=100)["videoId"] == "1"
     assert "query=space" in str(s.calls.last.request.url) and "max_results=30" in str(s.calls.last.request.url)
     assert "max_comments=100" in str(c.calls.last.request.url)
+
+
+@respx.mock
+async def test_temu_methods_kept_for_compatibility():
+    s = respx.post(f"{BASE}/goods/temu-search").mock(return_value=httpx.Response(200, json={"urls": []}))
+    p = respx.post(f"{BASE}/goods/temu-product").mock(return_value=httpx.Response(200, json={"name": "Toy"}))
+    product_url = "https://www.temu.com/xyz-g-601099512345678.html"
+    with make_client() as su:
+        assert su.temu_search("kids toys", limit=10, sort="best_selling") == {"urls": []}
+        assert su.temu_product(product_url) == {"name": "Toy"}
+    assert parse_qs(urlparse(str(s.calls.last.request.url)).query) == {
+        "keyword": ["kids toys"],
+        "limit": ["10"],
+        "sort": ["best_selling"],
+    }
+    assert parse_qs(urlparse(str(p.calls.last.request.url)).query) == {"url": [product_url]}
+    async with AsyncClient(api_key="test-key") as su:
+        assert await su.temu_search("phone case") == {"urls": []}
+        assert await su.temu_product(product_url) == {"name": "Toy"}
+    assert parse_qs(urlparse(str(s.calls.last.request.url)).query) == {"keyword": ["phone case"]}

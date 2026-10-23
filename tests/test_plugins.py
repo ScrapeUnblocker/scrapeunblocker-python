@@ -132,3 +132,110 @@ async def test_async_methods():
     assert _query(route) == {"mode": ["specials"]}
     first = parse_qs(urlparse(str(route.calls[0].request.url)).query)
     assert first == {"mode": ["search"], "query": ["milk"], "max_results": ["96"]}
+
+
+@respx.mock
+def test_google_hotels_search_and_property():
+    search = respx.post(f"{BASE}/travel/google-hotels").mock(
+        return_value=httpx.Response(200, json={"properties": []})
+    )
+    prop = respx.post(f"{BASE}/travel/google-hotels-property").mock(
+        return_value=httpx.Response(200, json={"offers": []})
+    )
+    with Client(api_key="test-key") as su:
+        su.google_hotels("hotels in Paris", check_in="2026-11-02", check_out="2026-11-05", currency="EUR")
+        su.google_hotels_property("ChkIqp", adults=1, children="7,10")
+    assert _query(search) == {
+        "q": ["hotels in Paris"],
+        "check_in": ["2026-11-02"],
+        "check_out": ["2026-11-05"],
+        "currency": ["EUR"],
+    }
+    assert _query(prop) == {"property_token": ["ChkIqp"], "adults": ["1"], "children": ["7,10"]}
+
+
+@respx.mock
+def test_google_news_search_or_section():
+    route = respx.post(f"{BASE}/search/google-news").mock(
+        return_value=httpx.Response(200, json={"articles": []})
+    )
+    with Client(api_key="test-key") as su:
+        su.google_news("tesla", when="1d", max_results=50)
+        assert _query(route) == {"q": ["tesla"], "when": ["1d"], "max_results": ["50"]}
+        su.google_news(topic="technology", gl="gb")
+    assert _query(route) == {"topic": ["technology"], "gl": ["gb"]}
+
+
+@respx.mock
+def test_google_ads_transparency_and_advertisers():
+    ads = respx.post(f"{BASE}/ads/google-ads-transparency").mock(
+        return_value=httpx.Response(200, json={"ads": []})
+    )
+    advertisers = respx.post(f"{BASE}/ads/google-ads-transparency-advertisers").mock(
+        return_value=httpx.Response(200, json={"advertisers": []})
+    )
+    with Client(api_key="test-key") as su:
+        su.google_ads_transparency(domain="nike.com", format="video", include_preview=False)
+        su.google_ads_transparency_advertisers("nike", max_results=5)
+    assert _query(ads) == {"domain": ["nike.com"], "format": ["video"], "include_preview": ["false"]}
+    assert _query(advertisers) == {"q": ["nike"], "max_results": ["5"]}
+
+
+@respx.mock
+def test_shopee_search_and_product():
+    search = respx.post(f"{BASE}/marketplace/shopee-search").mock(
+        return_value=httpx.Response(200, json={"products": []})
+    )
+    product = respx.post(f"{BASE}/marketplace/shopee-product").mock(
+        return_value=httpx.Response(200, json={"title": "Case"})
+    )
+    with Client(api_key="test-key") as su:
+        su.shopee_search("lego", country="my", sort="sales", min_price=10)
+        su.shopee_product(shop_id="442800909", item_id="40270108836", country="sg")
+    assert _query(search) == {"q": ["lego"], "country": ["my"], "sort": ["sales"], "min_price": ["10"]}
+    assert _query(product) == {"shop_id": ["442800909"], "item_id": ["40270108836"], "country": ["sg"]}
+
+
+@respx.mock
+def test_taobao_search_and_product():
+    search = respx.post(f"{BASE}/marketplace/taobao-search").mock(
+        return_value=httpx.Response(200, json={"products": []})
+    )
+    product = respx.post(f"{BASE}/marketplace/taobao-product").mock(
+        return_value=httpx.Response(200, json={"itemId": "765833709683"})
+    )
+    with Client(api_key="test-key") as su:
+        su.taobao_search("phone case", sort="sales", price_max=99.5, filter="20000-88634403")
+        su.taobao_product(url="https://item.taobao.com/item.htm?id=765833709683")
+    assert _query(search) == {
+        "q": ["phone case"],
+        "sort": ["sales"],
+        "price_max": ["99.5"],
+        "filter": ["20000-88634403"],
+    }
+    assert _query(product) == {"url": ["https://item.taobao.com/item.htm?id=765833709683"]}
+
+
+@respx.mock
+def test_upwork_jobs_without_a_query():
+    route = respx.post(f"{BASE}/jobs/upwork").mock(
+        return_value=httpx.Response(200, json={"jobs": []})
+    )
+    with Client(api_key="test-key") as su:
+        su.upwork_jobs(sort="recency", job_type="hourly", details=True)
+    assert _query(route) == {"job_type": ["hourly"], "sort": ["recency"], "details": ["true"]}
+
+
+@respx.mock
+def test_smyths_and_wish():
+    smyths = respx.post(f"{BASE}/marketplace/smyths-inventory").mock(
+        return_value=httpx.Response(200, json={"products": []})
+    )
+    wish = respx.post(f"{BASE}/marketplace/wish-search").mock(
+        return_value=httpx.Response(200, json={"products": []})
+    )
+    with Client(api_key="test-key") as su:
+        su.smyths_search("lego", max_results=24)
+        su.wish_search("phone case", page=2)
+    assert _query(smyths) == {"mode": ["search"], "query": ["lego"], "max_results": ["24"]}
+    assert _query(wish) == {"query": ["phone case"], "page": ["2"]}

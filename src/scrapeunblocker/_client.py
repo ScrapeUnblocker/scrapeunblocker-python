@@ -813,6 +813,57 @@ class Client(_PluginMethods):
             proxy_country=proxy_country,
         )
 
+    def temu_search(
+        self,
+        keyword: str,
+        *,
+        limit: Optional[int] = None,
+        sort: Optional[str] = None,
+    ) -> Any:
+        """Search Temu by keyword.
+
+        Deprecated: Temu's plugin is unlisted; kept for compatibility.
+
+        Returns the matching product urls (about 40 per page); fetch each
+        url's data with :meth:`temu_product`.
+
+        Args:
+            keyword: Search phrase, e.g. 'kids toys' or 'phone case'.
+            limit: Max product urls to return (one search page carries ~40).
+                API default: 40.
+            sort: Result order, using Temu's own sort: ``relevance``
+                (default), ``best_selling``, ``recent``, ``price_asc`` or
+                ``price_desc``.
+
+        Calls ``POST /goods/temu-search``.
+        """
+        return self._post_json(
+            "/goods/temu-search",
+            keyword=keyword,
+            limit=limit,
+            sort=sort,
+        )
+
+    def temu_product(
+        self,
+        url: str,
+    ) -> Any:
+        """Scrape a Temu product page.
+
+        Deprecated: Temu's plugin is unlisted; kept for compatibility.
+
+        Args:
+            url: Full Temu product url, e.g.
+                'https://www.temu.com/xyz-g-601099512345678.html'. Must be a
+                product page (its path ends in ``-g-<id>.html``).
+
+        Calls ``POST /goods/temu-product``.
+        """
+        return self._post_json(
+            "/goods/temu-product",
+            url=url,
+        )
+
     def get_image(
         self, url: str, *, proxy_country: Optional[str] = None
     ) -> bytes:

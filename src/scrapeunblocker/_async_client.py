@@ -534,6 +534,41 @@ class AsyncClient(_AsyncPluginMethods):
             proxy_country=proxy_country,
         )
 
+    async def temu_search(
+        self,
+        keyword: str,
+        *,
+        limit: Optional[int] = None,
+        sort: Optional[str] = None,
+    ) -> Any:
+        """Search Temu by keyword.
+
+        Deprecated: Temu's plugin is unlisted; kept for compatibility.
+
+        See :meth:`scrapeunblocker.Client.temu_search`.
+        """
+        return await self._post_json(
+            "/goods/temu-search",
+            keyword=keyword,
+            limit=limit,
+            sort=sort,
+        )
+
+    async def temu_product(
+        self,
+        url: str,
+    ) -> Any:
+        """Scrape a Temu product page.
+
+        Deprecated: Temu's plugin is unlisted; kept for compatibility.
+
+        See :meth:`scrapeunblocker.Client.temu_product`.
+        """
+        return await self._post_json(
+            "/goods/temu-product",
+            url=url,
+        )
+
     async def get_image(
         self, url: str, *, proxy_country: Optional[str] = None
     ) -> bytes:
