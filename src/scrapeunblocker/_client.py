@@ -243,6 +243,63 @@ class Client(_PluginMethods):
             return response.json()
         return response.text
 
+    def get_markdown(
+        self,
+        url: str,
+        *,
+        main_content_only: bool = True,
+        proxy_country: Optional[str] = None,
+        time_sleep: Optional[int] = None,
+        method: Optional[str] = None,
+        value: Optional[str] = None,
+        method_timeout: Optional[int] = None,
+        steps: Optional[List[Dict[str, Any]]] = None,
+    ) -> str:
+        """Fetch a URL and return the rendered page as clean Markdown.
+
+        Built for LLMs, agents and RAG pipelines. The page is rendered in a
+        real browser behind the same anti-bot bypass chain as
+        :meth:`get_page_source`, then converted to Markdown: headings, lists,
+        tables, absolute links, images with their alt text and code blocks,
+        without scripts, styles, navigation, footers, forms or hidden
+        elements. Billed like an HTML call.
+
+        Args:
+            url: The page to fetch.
+            main_content_only: Keep only the page's main content, without
+                navigation, the site header, footer and sidebars (the
+                default). Pass ``False`` to convert the whole page.
+            proxy_country: ISO country code to route through (e.g. ``"US"``).
+            time_sleep: Extra seconds to wait after load before capture.
+            method: Advanced render-wait method (``"css"``, ``"js"``, ...).
+            value: The selector/expression paired with ``method``.
+            method_timeout: Cap in seconds for the render-wait method.
+            steps: Browser actions run after the page loads and before it is
+                converted - the same list :meth:`get_page_source` takes. A
+                failed step raises :class:`~scrapeunblocker.StepFailedError`.
+
+        Returns:
+            The page as a Markdown string.
+
+        Raises:
+            TargetNotFoundError: The target page itself answered 404 or 410.
+                The call is billed; the not-found page, as Markdown, is on
+                ``.html``.
+        """
+        params = _base.build_params(
+            url=url,
+            markdown=True,
+            main_content_only=False if main_content_only is False else None,
+            proxy_country=proxy_country,
+            time_sleep=time_sleep,
+            method=method,
+            value=value,
+            method_timeout=method_timeout,
+            steps=json.dumps(steps) if steps is not None else None,
+        )
+        response = self._request("/getPageSource", params)
+        return response.text
+
     def get_parsed(
         self,
         url: str,

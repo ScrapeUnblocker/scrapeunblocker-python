@@ -187,6 +187,42 @@ class AsyncClient(_AsyncPluginMethods):
             return response.json()
         return response.text
 
+    async def get_markdown(
+        self,
+        url: str,
+        *,
+        main_content_only: bool = True,
+        proxy_country: Optional[str] = None,
+        time_sleep: Optional[int] = None,
+        method: Optional[str] = None,
+        value: Optional[str] = None,
+        method_timeout: Optional[int] = None,
+        steps: Optional[List[Dict[str, Any]]] = None,
+    ) -> str:
+        """Fetch a URL and return the rendered page as clean Markdown.
+
+        Built for LLMs, agents and RAG pipelines; billed like an HTML call.
+        See :meth:`scrapeunblocker.Client.get_markdown` for the full
+        parameter reference. ``main_content_only`` (default ``True``) keeps
+        only the main content, without navigation, site header, footer and
+        sidebars; pass ``False`` for the whole page. A target page that
+        answers 404 or 410 raises :class:`~scrapeunblocker.TargetNotFoundError`
+        (billed; the not-found page, as Markdown, is on ``.html``).
+        """
+        params = _base.build_params(
+            url=url,
+            markdown=True,
+            main_content_only=False if main_content_only is False else None,
+            proxy_country=proxy_country,
+            time_sleep=time_sleep,
+            method=method,
+            value=value,
+            method_timeout=method_timeout,
+            steps=json.dumps(steps) if steps is not None else None,
+        )
+        response = await self._request("/getPageSource", params)
+        return response.text
+
     async def get_parsed(
         self,
         url: str,

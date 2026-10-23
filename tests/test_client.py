@@ -181,6 +181,96 @@ async def test_async_steps_and_list_elements():
     assert query["list_elements"][0] == "true"
 
 
+MARKDOWN = "# A Light in the Attic\n\n| Price | £51.77 |\n| --- | --- |\n"
+
+
+def markdown_response(status=200, text=MARKDOWN, headers=None):
+    return httpx.Response(
+        status,
+        text=text,
+        headers={"Content-Type": "text/markdown; charset=utf-8", **(headers or {})},
+    )
+
+
+@respx.mock
+def test_get_markdown_sends_markdown_and_returns_text():
+    route = respx.post(f"{BASE}/getPageSource").mock(return_value=markdown_response())
+    with make_client() as su:
+        out = su.get_markdown("https://example.com/book", proxy_country="US")
+    assert out == MARKDOWN
+    request = route.calls.last.request
+    assert request.url.path == "/getPageSource"
+    assert request.headers["x-scrapeunblocker-key"] == "test-key"
+    query = parse_qs(urlparse(str(request.url)).query)
+    assert query["url"] == ["https://example.com/book"]
+    assert query["markdown"] == ["true"]
+    assert query["proxy_country"] == ["US"]
+    # The API keeps only the main content by default, so true is never sent.
+    assert "main_content_only" not in query
+    # The other response formats cannot be combined with markdown.
+    for other in ("parsed_data", "get_cookies", "list_elements"):
+        assert other not in query
+
+
+@respx.mock
+def test_get_markdown_main_content_only_false_is_sent():
+    route = respx.post(f"{BASE}/getPageSource").mock(return_value=markdown_response())
+    with make_client() as su:
+        su.get_markdown("https://example.com", main_content_only=False)
+    query = parse_qs(urlparse(str(route.calls.last.request.url)).query)
+    assert query["markdown"] == ["true"]
+    assert query["main_content_only"] == ["false"]
+
+
+@respx.mock
+def test_get_markdown_passes_render_options_and_steps():
+    route = respx.post(f"{BASE}/getPageSource").mock(return_value=markdown_response())
+    steps = [{"action": "click", "selector": "#more"}]
+    with make_client() as su:
+        su.get_markdown(
+            "https://example.com",
+            time_sleep=2,
+            method="css",
+            value=".content",
+            method_timeout=10,
+            steps=steps,
+        )
+    query = parse_qs(urlparse(str(route.calls.last.request.url)).query)
+    assert query["time_sleep"] == ["2"]
+    assert query["method"] == ["css"]
+    assert query["value"] == [".content"]
+    assert query["method_timeout"] == ["10"]
+    assert json.loads(query["steps"][0]) == steps
+
+
+@respx.mock
+def test_get_markdown_target_not_found_carries_the_markdown_page():
+    route = respx.post(f"{BASE}/getPageSource").mock(
+        return_value=markdown_response(404, "# Not Found", {"X-Origin-Status": "404"})
+    )
+    with make_client() as su:
+        with pytest.raises(TargetNotFoundError) as info:
+            su.get_markdown("https://example.com/gone")
+    assert info.value.origin_status == 404
+    assert info.value.html == "# Not Found"
+    assert route.call_count == 1
+
+
+@respx.mock
+async def test_async_get_markdown():
+    route = respx.post(f"{BASE}/getPageSource").mock(return_value=markdown_response())
+    async with AsyncClient(api_key="test-key") as su:
+        out = await su.get_markdown("https://example.com")
+        assert out == MARKDOWN
+        query = parse_qs(urlparse(str(route.calls.last.request.url)).query)
+        assert query["markdown"] == ["true"]
+        assert "main_content_only" not in query
+
+        await su.get_markdown("https://example.com", main_content_only=False)
+        query = parse_qs(urlparse(str(route.calls.last.request.url)).query)
+        assert query["main_content_only"] == ["false"]
+
+
 @respx.mock
 def test_get_parsed_returns_parsed_page():
     payload = {"data": {"page_type": "product", "source": "schema.org", "data": {"price": 10}}}
