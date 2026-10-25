@@ -377,7 +377,7 @@ class Client(_PluginMethods):
             proxy_country: ISO country code to search from.
             pages_to_check: How many result pages to fetch (1-10).
             wait_after_load: Seconds to wait after the page loads.
-            captcha_pause: Seconds to pause if a captcha appears.
+            captcha_pause: Kept for compatibility; the API ignores it.
         """
         return self._post_json(
             "/serpApi",
