@@ -1187,16 +1187,20 @@ class _PluginMethods:
         one page of results: up to 40 `products`, each with `position`,
         `itemId`, `shopId`, `name`, `url`, `image`, `price`, `originalPrice`
         (when Shopee shows the crossed-out price), `discountPercent`,
-        `currency`, `rating` (average stars), `location` (where the seller
-        ships from) and `labels` (promotion badges). `sort` orders the results,
-        `min_price` / `max_price` filter them, `shop_id` keeps one shop's
-        products (or lists the shop without `q`), and `url` takes a Shopee
-        search or category link instead. Shopee shows one page per search, so
-        run several sort orders or price ranges for more products. `price` is
-        what Shopee shows a signed-out shopper, which can be a promotional or
-        new-customer price (see `labels`). Not available: stock, units sold,
-        rating counts and reviews (Shopee does not publish them on the pages
-        these endpoints read). One unit per call.
+        `isPixPrice`, `currency`, `rating` (average stars), `location` (where
+        the seller ships from) and `labels` (promotion badges). `sort` orders
+        the results, `min_price` / `max_price` filter them, `shop_id` keeps one
+        shop's products (or lists the shop without `q`), and `url` takes a
+        Shopee search or category link instead. Shopee shows one page per
+        search, so run several sort orders or price ranges for more products.
+        `price` is what Shopee shows a signed-out shopper, which can be a
+        promotional or new-customer price (see `labels`). In Brazil a card
+        often shows the Pix price (`isPixPrice: true`): `price` is then the Pix
+        price and `discountPercent` is measured against the list price, which
+        Shopee does not show on such a card, so `originalPrice` is null. Not
+        available: per-variation prices, stock counts, units sold, rating
+        counts and reviews (Shopee does not publish them on the pages these
+        endpoints read). One unit per call.
 
         Args:
             q: What to search for, e.g. 'iphone case' or 'air fryer'. Optional
@@ -1250,15 +1254,27 @@ class _PluginMethods:
         `rating`, `ratingCount`, `followers`, `itemCount`,
         `responseRatePercent`, `isOfficialShop`, `isPreferredPlusSeller`,
         `location`, `joinedAt`). With `dataLevel: full` it also has
-        `description`, `brand`, `condition`, `categories`, `videos`,
-        `variations` (option names), `models` (`modelId`, `name`),
-        `attributes`, `isOfficialShop`, `isPreOrder`, `estimatedShippingDays`
-        and `createdAt`; `dataLevel: meta` means Shopee showed only the
-        product's title and main image (some markets), with price, rating and
-        shop still included. `price` is what Shopee shows a signed-out shopper,
-        which can be a promotional or new-customer price (see `labels`). Not
-        available: stock, units sold, rating counts and reviews (Shopee does
-        not publish them on the pages these endpoints read). One unit per call.
+        `availability` (`in_stock`, `sold_out` or `unavailable` for a withdrawn
+        listing) and `inStock`, `description`, `brand`, `condition`,
+        `categories` (the path the product page's breadcrumb shows, with ids),
+        `browseCategories` (the browse tree, whose ids Shopee's category links
+        use), `videos`, `variations` (option names), `models` (`modelId`,
+        `name`, `available` - false for a sold-out variation - and `tierIndex`,
+        the model's option in each variation), `attributes`, `isOfficialShop`,
+        `isPreOrder`, `estimatedShippingDays` and `createdAt`; `dataLevel:
+        meta` means Shopee showed only the product's title and main image (some
+        markets), with price, rating and shop still included. A product Shopee
+        says does not exist (removed, or never existed) answers 404 with JSON
+        `{"status": "not_found", ...}`; a 502 means the call could not get an
+        answer from Shopee and can be retried. `price` is what Shopee shows a
+        signed-out shopper, which can be a promotional or new-customer price
+        (see `labels`). In Brazil a card often shows the Pix price
+        (`isPixPrice: true`): `price` is then the Pix price and
+        `discountPercent` is measured against the list price, which Shopee does
+        not show on such a card, so `originalPrice` is null. Not available:
+        per-variation prices, stock counts, units sold, rating counts and
+        reviews (Shopee does not publish them on the pages these endpoints
+        read). One unit per call.
 
         Args:
             url: A Shopee product link, e.g. https://shopee.sg/Beats-
@@ -6911,7 +6927,7 @@ class _PluginMethods:
             video: Video id (dQw4w9WgXcQ) or any YouTube video URL.
             lang: Preferred caption language code, e.g. 'en'. Omit for the
                 default/first track. A prefix like 'en' matches 'en-US'.
-            format: Output shape: text, segments. 'segments' returns
+            format: Output shape: segments, text. 'segments' returns
                 timestamps; 'text' returns only the joined plaintext. API
                 default: segments.
             proxy_country: Proxy country the request is sent from (ISO-2, e.g.
@@ -8540,16 +8556,20 @@ class _AsyncPluginMethods:
         one page of results: up to 40 `products`, each with `position`,
         `itemId`, `shopId`, `name`, `url`, `image`, `price`, `originalPrice`
         (when Shopee shows the crossed-out price), `discountPercent`,
-        `currency`, `rating` (average stars), `location` (where the seller
-        ships from) and `labels` (promotion badges). `sort` orders the results,
-        `min_price` / `max_price` filter them, `shop_id` keeps one shop's
-        products (or lists the shop without `q`), and `url` takes a Shopee
-        search or category link instead. Shopee shows one page per search, so
-        run several sort orders or price ranges for more products. `price` is
-        what Shopee shows a signed-out shopper, which can be a promotional or
-        new-customer price (see `labels`). Not available: stock, units sold,
-        rating counts and reviews (Shopee does not publish them on the pages
-        these endpoints read). One unit per call.
+        `isPixPrice`, `currency`, `rating` (average stars), `location` (where
+        the seller ships from) and `labels` (promotion badges). `sort` orders
+        the results, `min_price` / `max_price` filter them, `shop_id` keeps one
+        shop's products (or lists the shop without `q`), and `url` takes a
+        Shopee search or category link instead. Shopee shows one page per
+        search, so run several sort orders or price ranges for more products.
+        `price` is what Shopee shows a signed-out shopper, which can be a
+        promotional or new-customer price (see `labels`). In Brazil a card
+        often shows the Pix price (`isPixPrice: true`): `price` is then the Pix
+        price and `discountPercent` is measured against the list price, which
+        Shopee does not show on such a card, so `originalPrice` is null. Not
+        available: per-variation prices, stock counts, units sold, rating
+        counts and reviews (Shopee does not publish them on the pages these
+        endpoints read). One unit per call.
 
         Args:
             q: What to search for, e.g. 'iphone case' or 'air fryer'. Optional
@@ -8603,15 +8623,27 @@ class _AsyncPluginMethods:
         `rating`, `ratingCount`, `followers`, `itemCount`,
         `responseRatePercent`, `isOfficialShop`, `isPreferredPlusSeller`,
         `location`, `joinedAt`). With `dataLevel: full` it also has
-        `description`, `brand`, `condition`, `categories`, `videos`,
-        `variations` (option names), `models` (`modelId`, `name`),
-        `attributes`, `isOfficialShop`, `isPreOrder`, `estimatedShippingDays`
-        and `createdAt`; `dataLevel: meta` means Shopee showed only the
-        product's title and main image (some markets), with price, rating and
-        shop still included. `price` is what Shopee shows a signed-out shopper,
-        which can be a promotional or new-customer price (see `labels`). Not
-        available: stock, units sold, rating counts and reviews (Shopee does
-        not publish them on the pages these endpoints read). One unit per call.
+        `availability` (`in_stock`, `sold_out` or `unavailable` for a withdrawn
+        listing) and `inStock`, `description`, `brand`, `condition`,
+        `categories` (the path the product page's breadcrumb shows, with ids),
+        `browseCategories` (the browse tree, whose ids Shopee's category links
+        use), `videos`, `variations` (option names), `models` (`modelId`,
+        `name`, `available` - false for a sold-out variation - and `tierIndex`,
+        the model's option in each variation), `attributes`, `isOfficialShop`,
+        `isPreOrder`, `estimatedShippingDays` and `createdAt`; `dataLevel:
+        meta` means Shopee showed only the product's title and main image (some
+        markets), with price, rating and shop still included. A product Shopee
+        says does not exist (removed, or never existed) answers 404 with JSON
+        `{"status": "not_found", ...}`; a 502 means the call could not get an
+        answer from Shopee and can be retried. `price` is what Shopee shows a
+        signed-out shopper, which can be a promotional or new-customer price
+        (see `labels`). In Brazil a card often shows the Pix price
+        (`isPixPrice: true`): `price` is then the Pix price and
+        `discountPercent` is measured against the list price, which Shopee does
+        not show on such a card, so `originalPrice` is null. Not available:
+        per-variation prices, stock counts, units sold, rating counts and
+        reviews (Shopee does not publish them on the pages these endpoints
+        read). One unit per call.
 
         Args:
             url: A Shopee product link, e.g. https://shopee.sg/Beats-
@@ -14264,7 +14296,7 @@ class _AsyncPluginMethods:
             video: Video id (dQw4w9WgXcQ) or any YouTube video URL.
             lang: Preferred caption language code, e.g. 'en'. Omit for the
                 default/first track. A prefix like 'en' matches 'en-US'.
-            format: Output shape: text, segments. 'segments' returns
+            format: Output shape: segments, text. 'segments' returns
                 timestamps; 'text' returns only the joined plaintext. API
                 default: segments.
             proxy_country: Proxy country the request is sent from (ISO-2, e.g.
