@@ -3840,6 +3840,73 @@ class _PluginMethods:
             raw=raw,
         )
 
+    def maps_reviews(
+        self,
+        *,
+        url: Optional[str] = None,
+        place_id: Optional[str] = None,
+        feature_id: Optional[str] = None,
+        sort: Optional[str] = None,
+        max_reviews: Optional[int] = None,
+        next_page_token: Optional[str] = None,
+        hl: Optional[str] = None,
+        gl: Optional[str] = None,
+        proxy_country: Optional[str] = None,
+    ) -> Any:
+        """Scrape Google Maps reviews.
+
+        Returns one Google Maps place's reviews as JSON, sorted the way Google
+        sorts them: `relevant`, `newest`, `highest` or `lowest`. Each review
+        has `rating` (1-5), `date` (exact ISO 8601, UTC) + `timestamp`,
+        `relativeDate`, `text` (original) + `language`, `translatedText` (into
+        `hl`, when the review is in another language), `author`, `photos`,
+        `details` (guided answers such as 'Rooms: 5'), `ownerResponse` and
+        `reviewUrl`. The answer also carries a `place` summary and
+        `nextPageToken` for paging. Identify the place with `feature_id`
+        (0xHEX:0xHEX), `place_id` (ChIJ...) or a Maps `url`. Reviews come in
+        pages of 20; each page fetched is one billed unit.
+
+        Args:
+            url: A Google Maps place URL (share link or /maps/place/... URL).
+                The feature id or place_id is read out of it.
+            place_id: A Google place_id, e.g. 'ChIJN1t_tDeuEmsRUsoyG83frY4'.
+            feature_id: A Maps feature id '0xHEX:0xHEX', e.g.
+                '0x4776901a5d4813b3:0x2a497c8b414893c'. Fastest - no resolve
+                step.
+            sort: Review order: 'relevant' (Google's default), 'newest',
+                'highest' or 'lowest'. SerpApi's 'qualityScore', 'newestFirst',
+                'ratingHigh' and 'ratingLow' are accepted too. API default:
+                relevant.
+            max_reviews: How many reviews to return, 1-200. Reviews come in
+                pages of 20; each page fetched is one billed unit. API default:
+                20.
+            next_page_token: Continue from a previous answer's `nextPageToken`
+                (same place and sort). When `max_reviews` is not a multiple of
+                20 the next page can repeat a few reviews - dedupe on
+                `reviewId`.
+            hl: Language for Google's labels and the review translation
+                (`translatedText`), e.g. 'en', 'de'. The original text is
+                always returned in `text`. API default: en.
+            gl: Google country, ISO-2 lowercase, e.g. 'us'. API default: us.
+            proxy_country: Proxy country the request is sent from (ISO-2, e.g.
+                'US', 'DE'). Reviews are the same from any country. API
+                default: us.
+
+        Calls ``POST /maps/reviews``.
+        """
+        return self._post_json(
+            "/maps/reviews",
+            url=url,
+            place_id=place_id,
+            feature_id=feature_id,
+            sort=sort,
+            max_reviews=max_reviews,
+            next_page_token=next_page_token,
+            hl=hl,
+            gl=gl,
+            proxy_country=proxy_country,
+        )
+
     def google_hotels(
         self,
         q: str,
@@ -6927,7 +6994,7 @@ class _PluginMethods:
             video: Video id (dQw4w9WgXcQ) or any YouTube video URL.
             lang: Preferred caption language code, e.g. 'en'. Omit for the
                 default/first track. A prefix like 'en' matches 'en-US'.
-            format: Output shape: segments, text. 'segments' returns
+            format: Output shape: text, segments. 'segments' returns
                 timestamps; 'text' returns only the joined plaintext. API
                 default: segments.
             proxy_country: Proxy country the request is sent from (ISO-2, e.g.
@@ -11209,6 +11276,73 @@ class _AsyncPluginMethods:
             raw=raw,
         )
 
+    async def maps_reviews(
+        self,
+        *,
+        url: Optional[str] = None,
+        place_id: Optional[str] = None,
+        feature_id: Optional[str] = None,
+        sort: Optional[str] = None,
+        max_reviews: Optional[int] = None,
+        next_page_token: Optional[str] = None,
+        hl: Optional[str] = None,
+        gl: Optional[str] = None,
+        proxy_country: Optional[str] = None,
+    ) -> Any:
+        """Scrape Google Maps reviews.
+
+        Returns one Google Maps place's reviews as JSON, sorted the way Google
+        sorts them: `relevant`, `newest`, `highest` or `lowest`. Each review
+        has `rating` (1-5), `date` (exact ISO 8601, UTC) + `timestamp`,
+        `relativeDate`, `text` (original) + `language`, `translatedText` (into
+        `hl`, when the review is in another language), `author`, `photos`,
+        `details` (guided answers such as 'Rooms: 5'), `ownerResponse` and
+        `reviewUrl`. The answer also carries a `place` summary and
+        `nextPageToken` for paging. Identify the place with `feature_id`
+        (0xHEX:0xHEX), `place_id` (ChIJ...) or a Maps `url`. Reviews come in
+        pages of 20; each page fetched is one billed unit.
+
+        Args:
+            url: A Google Maps place URL (share link or /maps/place/... URL).
+                The feature id or place_id is read out of it.
+            place_id: A Google place_id, e.g. 'ChIJN1t_tDeuEmsRUsoyG83frY4'.
+            feature_id: A Maps feature id '0xHEX:0xHEX', e.g.
+                '0x4776901a5d4813b3:0x2a497c8b414893c'. Fastest - no resolve
+                step.
+            sort: Review order: 'relevant' (Google's default), 'newest',
+                'highest' or 'lowest'. SerpApi's 'qualityScore', 'newestFirst',
+                'ratingHigh' and 'ratingLow' are accepted too. API default:
+                relevant.
+            max_reviews: How many reviews to return, 1-200. Reviews come in
+                pages of 20; each page fetched is one billed unit. API default:
+                20.
+            next_page_token: Continue from a previous answer's `nextPageToken`
+                (same place and sort). When `max_reviews` is not a multiple of
+                20 the next page can repeat a few reviews - dedupe on
+                `reviewId`.
+            hl: Language for Google's labels and the review translation
+                (`translatedText`), e.g. 'en', 'de'. The original text is
+                always returned in `text`. API default: en.
+            gl: Google country, ISO-2 lowercase, e.g. 'us'. API default: us.
+            proxy_country: Proxy country the request is sent from (ISO-2, e.g.
+                'US', 'DE'). Reviews are the same from any country. API
+                default: us.
+
+        Calls ``POST /maps/reviews``.
+        """
+        return await self._post_json(
+            "/maps/reviews",
+            url=url,
+            place_id=place_id,
+            feature_id=feature_id,
+            sort=sort,
+            max_reviews=max_reviews,
+            next_page_token=next_page_token,
+            hl=hl,
+            gl=gl,
+            proxy_country=proxy_country,
+        )
+
     async def google_hotels(
         self,
         q: str,
@@ -14296,7 +14430,7 @@ class _AsyncPluginMethods:
             video: Video id (dQw4w9WgXcQ) or any YouTube video URL.
             lang: Preferred caption language code, e.g. 'en'. Omit for the
                 default/first track. A prefix like 'en' matches 'en-US'.
-            format: Output shape: segments, text. 'segments' returns
+            format: Output shape: text, segments. 'segments' returns
                 timestamps; 'text' returns only the joined plaintext. API
                 default: segments.
             proxy_country: Proxy country the request is sent from (ISO-2, e.g.
