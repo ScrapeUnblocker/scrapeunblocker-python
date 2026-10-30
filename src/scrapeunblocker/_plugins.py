@@ -4278,6 +4278,96 @@ class _PluginMethods:
             zip=zip,
         )
 
+    def bodegaaurrera_search(
+        self,
+        query: Optional[str] = None,
+        *,
+        sort: Optional[str] = None,
+        page: Optional[int] = None,
+        max_results: Optional[int] = None,
+        url: Optional[str] = None,
+    ) -> Any:
+        """Scrape Bodega Aurrera (Mexico) product search.
+
+        Searches Bodega Aurrera (bodegaaurrera.com.mx, Walmart de Mexico) for
+        `query` and returns `products`, each with `position`, `productId`,
+        `name`, `brand`, `url`, `price` (MXN), `wasPrice` and `savings` (only
+        on a promotion), `unitPrice`, `priceRange`, `rating`, `reviewCount`,
+        `availability` / `availabilityText` / `inStock`, `seller` /
+        `sellerType`, `salesUnit`, `department`, `category` (path), `badges`,
+        `fulfillment` (pickup / delivery labels), `sponsored` and `image`. Also
+        `totalResults`, `storeId` (the store the prices and availability are
+        for: the one the storefront assigns a new visitor - a store or postal
+        code cannot be chosen) and `nextPage`. Sort with `sort` (relevance,
+        price_low, price_high), start at `page` and collect up to `max_results`
+        across pages (about 40 per page, each page billed as one request, see
+        `pagesFetched`). `url` takes a Bodega Aurrera search link instead of
+        `query`. A results page usually takes 1-3 s; a page that has to be
+        rendered in a browser takes 20-60 s.
+
+        Args:
+            query: What to search, e.g. 'leche', 'arroz', 'detergente' or
+                'pañales'.
+            sort: Order: relevance, price_low, price_high. API default:
+                relevance.
+            page: 1-based results page to start from (1-25). API default: 1.
+            max_results: Products to collect across pages (1-220); about 44 per
+                page, and each page read is billed as one request. API default:
+                44.
+            url: Instead of `query`: a Bodega Aurrera search link, e.g.
+                https://www.bodegaaurrera.com.mx/search?q=leche (its sort and
+                page are used).
+
+        Calls ``POST /groceries/bodegaaurrera-search``.
+        """
+        return self._post_json(
+            "/groceries/bodegaaurrera-search",
+            query=query,
+            sort=sort,
+            page=page,
+            max_results=max_results,
+            url=url,
+        )
+
+    def bodegaaurrera_product(
+        self,
+        *,
+        product_id: Optional[str] = None,
+        url: Optional[str] = None,
+    ) -> Any:
+        """Scrape one Bodega Aurrera (Mexico) product.
+
+        Fetches one Bodega Aurrera product (by `product_id` or `url`) and
+        returns it as JSON: `productId`, `name`, `brand`, `url`, `upc`,
+        `model`, `price` (MXN), `wasPrice` / `savings` (only on a promotion),
+        `unitPrice`, `installments`, `availability` / `availabilityText` /
+        `inStock`, `orderLimit`, `orderMinimum`, `salesUnit`, `seller` /
+        `sellerId` / `sellerType`, `rating`, `reviewCount`, `ratingBreakdown`
+        (1-5 stars), `category` (path), `productType`, `shortDescription`,
+        `description`, `ingredients`, `specifications` (name / value),
+        `badges`, `fulfillment` (pickup / delivery messages),
+        `fulfillmentOptions`, `store` (the store the price and availability are
+        for - the one the storefront assigns a new visitor) and `image` /
+        `images`. A call usually takes 1-3 s, or 20-60 s when the page has to
+        be rendered in a browser. Companion to `/groceries/bodegaaurrera-
+        search`.
+
+        Args:
+            product_id: Bodega Aurrera item id, e.g. '00750649502153' (the
+                number at the end of an /ip/ link; search results give it as
+                `productId`).
+            url: Instead of `product_id`: a Bodega Aurrera product link, e.g.
+                https://www.bodegaaurrera.com.mx/ip/leche-great-value-
+                entera-1-l/00750649502153.
+
+        Calls ``POST /groceries/bodegaaurrera-product``.
+        """
+        return self._post_json(
+            "/groceries/bodegaaurrera-product",
+            product_id=product_id,
+            url=url,
+        )
+
     def smyths_inventory(
         self,
         code: str,
@@ -8350,7 +8440,7 @@ class _PluginMethods:
             video: Video id (dQw4w9WgXcQ) or any YouTube video URL.
             lang: Preferred caption language code, e.g. 'en'. Omit for the
                 default/first track. A prefix like 'en' matches 'en-US'.
-            format: Output shape: segments, text. 'segments' returns
+            format: Output shape: text, segments. 'segments' returns
                 timestamps; 'text' returns only the joined plaintext. API
                 default: segments.
             proxy_country: Proxy country the request is sent from (ISO-2, e.g.
@@ -13070,6 +13160,96 @@ class _AsyncPluginMethods:
             zip=zip,
         )
 
+    async def bodegaaurrera_search(
+        self,
+        query: Optional[str] = None,
+        *,
+        sort: Optional[str] = None,
+        page: Optional[int] = None,
+        max_results: Optional[int] = None,
+        url: Optional[str] = None,
+    ) -> Any:
+        """Scrape Bodega Aurrera (Mexico) product search.
+
+        Searches Bodega Aurrera (bodegaaurrera.com.mx, Walmart de Mexico) for
+        `query` and returns `products`, each with `position`, `productId`,
+        `name`, `brand`, `url`, `price` (MXN), `wasPrice` and `savings` (only
+        on a promotion), `unitPrice`, `priceRange`, `rating`, `reviewCount`,
+        `availability` / `availabilityText` / `inStock`, `seller` /
+        `sellerType`, `salesUnit`, `department`, `category` (path), `badges`,
+        `fulfillment` (pickup / delivery labels), `sponsored` and `image`. Also
+        `totalResults`, `storeId` (the store the prices and availability are
+        for: the one the storefront assigns a new visitor - a store or postal
+        code cannot be chosen) and `nextPage`. Sort with `sort` (relevance,
+        price_low, price_high), start at `page` and collect up to `max_results`
+        across pages (about 40 per page, each page billed as one request, see
+        `pagesFetched`). `url` takes a Bodega Aurrera search link instead of
+        `query`. A results page usually takes 1-3 s; a page that has to be
+        rendered in a browser takes 20-60 s.
+
+        Args:
+            query: What to search, e.g. 'leche', 'arroz', 'detergente' or
+                'pañales'.
+            sort: Order: relevance, price_low, price_high. API default:
+                relevance.
+            page: 1-based results page to start from (1-25). API default: 1.
+            max_results: Products to collect across pages (1-220); about 44 per
+                page, and each page read is billed as one request. API default:
+                44.
+            url: Instead of `query`: a Bodega Aurrera search link, e.g.
+                https://www.bodegaaurrera.com.mx/search?q=leche (its sort and
+                page are used).
+
+        Calls ``POST /groceries/bodegaaurrera-search``.
+        """
+        return await self._post_json(
+            "/groceries/bodegaaurrera-search",
+            query=query,
+            sort=sort,
+            page=page,
+            max_results=max_results,
+            url=url,
+        )
+
+    async def bodegaaurrera_product(
+        self,
+        *,
+        product_id: Optional[str] = None,
+        url: Optional[str] = None,
+    ) -> Any:
+        """Scrape one Bodega Aurrera (Mexico) product.
+
+        Fetches one Bodega Aurrera product (by `product_id` or `url`) and
+        returns it as JSON: `productId`, `name`, `brand`, `url`, `upc`,
+        `model`, `price` (MXN), `wasPrice` / `savings` (only on a promotion),
+        `unitPrice`, `installments`, `availability` / `availabilityText` /
+        `inStock`, `orderLimit`, `orderMinimum`, `salesUnit`, `seller` /
+        `sellerId` / `sellerType`, `rating`, `reviewCount`, `ratingBreakdown`
+        (1-5 stars), `category` (path), `productType`, `shortDescription`,
+        `description`, `ingredients`, `specifications` (name / value),
+        `badges`, `fulfillment` (pickup / delivery messages),
+        `fulfillmentOptions`, `store` (the store the price and availability are
+        for - the one the storefront assigns a new visitor) and `image` /
+        `images`. A call usually takes 1-3 s, or 20-60 s when the page has to
+        be rendered in a browser. Companion to `/groceries/bodegaaurrera-
+        search`.
+
+        Args:
+            product_id: Bodega Aurrera item id, e.g. '00750649502153' (the
+                number at the end of an /ip/ link; search results give it as
+                `productId`).
+            url: Instead of `product_id`: a Bodega Aurrera product link, e.g.
+                https://www.bodegaaurrera.com.mx/ip/leche-great-value-
+                entera-1-l/00750649502153.
+
+        Calls ``POST /groceries/bodegaaurrera-product``.
+        """
+        return await self._post_json(
+            "/groceries/bodegaaurrera-product",
+            product_id=product_id,
+            url=url,
+        )
+
     async def smyths_inventory(
         self,
         code: str,
@@ -17142,7 +17322,7 @@ class _AsyncPluginMethods:
             video: Video id (dQw4w9WgXcQ) or any YouTube video URL.
             lang: Preferred caption language code, e.g. 'en'. Omit for the
                 default/first track. A prefix like 'en' matches 'en-US'.
-            format: Output shape: segments, text. 'segments' returns
+            format: Output shape: text, segments. 'segments' returns
                 timestamps; 'text' returns only the joined plaintext. API
                 default: segments.
             proxy_country: Proxy country the request is sent from (ISO-2, e.g.
