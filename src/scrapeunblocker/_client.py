@@ -372,6 +372,13 @@ class Client(_PluginMethods):
     ) -> Any:
         """Run a Google search and return the parsed SERP as JSON.
 
+        The result has `organic` results and `topAds` / `bottomAds` (title,
+        real url, description, position, displayedUrl, domain; organic adds
+        source and date, ads advertiser), `aiOverview`, `totalResults`, and the
+        first page's other blocks: peopleAlsoAsk, relatedSearches,
+        knowledgeGraph, topStories, videos, localResults, shoppingResults and
+        spellingCorrection (each empty or None when Google shows none).
+
         Args:
             keyword: The search query.
             proxy_country: ISO country code to search from.

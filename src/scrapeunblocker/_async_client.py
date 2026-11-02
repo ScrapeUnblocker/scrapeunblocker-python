@@ -275,7 +275,9 @@ class AsyncClient(_AsyncPluginMethods):
         wait_after_load: int = 0,
         captcha_pause: int = 0,
     ) -> Any:
-        """Run a Google search and return the parsed SERP as JSON."""
+        """Run a Google search and return the parsed SERP as JSON - the same
+        result as :meth:`Client.serp` (organic results, ads, AI Overview and
+        the first page's other blocks)."""
         return await self._post_json(
             "/serpApi",
             keyword=keyword,

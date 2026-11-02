@@ -178,6 +178,11 @@ data = su.plugin("/marketplace/target-search", query="tv", max_results=24)
 
 ```python
 serp = su.serp("web scraping api", pages_to_check=2, proxy_country="US")
+for r in serp["organic"]:
+    print(r["position"], r["title"], r["url"], r["date"])
+# The first page's other blocks (empty when Google shows none):
+print([q["question"] for q in serp["peopleAlsoAsk"]], serp["relatedSearches"])
+print(serp["knowledgeGraph"], serp["topStories"], serp["videos"], serp["localResults"])
 ```
 
 ## Google Local (Maps)
