@@ -373,11 +373,13 @@ class Client(_PluginMethods):
         """Run a Google search and return the parsed SERP as JSON.
 
         The result has `organic` results and `topAds` / `bottomAds` (title,
-        real url, description, position, displayedUrl, domain; organic adds
-        source and date, ads advertiser), `aiOverview`, `totalResults`, and the
-        first page's other blocks: peopleAlsoAsk, relatedSearches,
-        knowledgeGraph, topStories, videos, localResults, shoppingResults and
-        spellingCorrection (each empty or None when Google shows none).
+        real url, description, position, displayedUrl, domain, favicon,
+        sitelinks; organic adds source, date, rating, richSnippet and
+        thumbnail, ads advertiser), `aiOverview`, `totalResults`, and the first
+        page's other blocks: peopleAlsoAsk, relatedSearches,
+        relatedSearchLinks, knowledgeGraph, topStories, videos, localResults,
+        shoppingResults and spellingCorrection (each empty or None when Google
+        shows none).
 
         Args:
             keyword: The search query.

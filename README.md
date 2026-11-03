@@ -179,9 +179,11 @@ data = su.plugin("/marketplace/target-search", query="tv", max_results=24)
 ```python
 serp = su.serp("web scraping api", pages_to_check=2, proxy_country="US")
 for r in serp["organic"]:
-    print(r["position"], r["title"], r["url"], r["date"])
+    print(r["position"], r["title"], r["url"], r["date"], r["favicon"], r["rating"])
+    for link in r["sitelinks"]:
+        print("  ", link["title"], link["url"])
 # The first page's other blocks (empty when Google shows none):
-print([q["question"] for q in serp["peopleAlsoAsk"]], serp["relatedSearches"])
+print([q["question"] for q in serp["peopleAlsoAsk"]], serp["relatedSearchLinks"])
 print(serp["knowledgeGraph"], serp["topStories"], serp["videos"], serp["localResults"])
 ```
 
