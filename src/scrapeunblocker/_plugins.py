@@ -319,7 +319,10 @@ class _PluginMethods:
 
         Searches Walmart for `query` and returns the products as JSON: `name`,
         `price` and `wasPrice`, `rating`, `reviewCount`, `brand`, `seller`,
-        `availability`, `image` and a product `url`. Sort with `sort`, filter
+        `availability`, `image`, a product `url`, `sponsored`, `unitPrice`,
+        `priceRange`, `promotions`, `fulfillment`, `deliveryAvailable` and
+        `variants`. The response also carries the search's `totalResults`,
+        `pages`, `filters` and `sponsoredProducts`. Sort with `sort`, filter
         with `min_price`/`max_price`, and collect up to `max_results` across
         pages.
 
@@ -364,16 +367,22 @@ class _PluginMethods:
         `inStock`, `condition`, `seller` (name, Walmart or marketplace seller,
         its rating and review count), `additionalSellerCount`, `fulfillment`
         (shipping, pickup and delivery: available or not, date, fee, store or
-        place), `returnPolicy`, `rating`, `reviewCount`, `reviewSummary` (star
-        histogram, recommend percentage, aspect scores), the first `reviews`,
-        `categories`, `shortDescription`, `description`, `highlights`,
-        `specifications`, `warranty`, `variantOptions` and every `variants`
-        entry (its own item id, attributes, price, stock), `images` and
-        `videos`. Fulfillment dates and the store are what Walmart quotes for
-        the US location it assigns to the request (`location` names it), not a
-        ZIP code or store you choose. Other sellers' offers are not on the
-        product page: only their count (`additionalSellerCount`) is returned.
-        Companion to `/marketplace/walmart-search`.
+        place), `returnPolicy`, `rating`, `reviewCount`, `totalReviewCount`,
+        `reviewSummary` (star histogram, recommend percentage, aspect scores),
+        `reviewSummaryText`, `reviewBullets`, `reviewTopics`,
+        `topPositiveReview`, `topNegativeReview`, the first `reviews`,
+        `offersCount`, `otherOffersFromPrice`, `otherSellers`, `promotions`,
+        `deliveryAvailable`, `pickupAvailable`, `categories`, `relatedPages`,
+        `colors`, `shortDescription`, `description`, `pageSummary`,
+        `highlights`, `specifications`, `directions`, `ingredients`,
+        `activeIngredients`, `nutritionFacts`, `warranty`, `variantOptions` and
+        every `variants` entry (its own item id, attributes, price, stock),
+        `images`, `videos`, `infographics` and `view360Images`. Fulfillment
+        dates and the store are what Walmart quotes for the US location it
+        assigns to the request (`location` names it), not a ZIP code or store
+        you choose. The product page holds only some of the other sellers'
+        offers (`otherSellers`); `offersCount` is how many there are. Companion
+        to `/marketplace/walmart-search`.
 
         Args:
             item_id: Walmart item id - the number at the end of a product link,
@@ -1591,10 +1600,12 @@ class _PluginMethods:
         """Scrape Taobao / Tmall keyword or category listings.
 
         Returns the products Taobao lists for a keyword `q` (or a `category`)
-        as JSON: `products` (`position`, `itemId`, `title`, `url`, `image`,
-        `price` in yuan with `currency` CNY, `priceLabel` (Taobao's price tag,
-        e.g. 优惠价), `localPrices` (the same price in the storefront's currency,
-        HKD and TWD), `shopId`, `shopName`, `descriptionMatchScore`,
+        as JSON: `products` (`position`, `itemId`, `itemKey` (the item's
+        catalogue key: pass it to `/marketplace/taobao-product` as `item_id`),
+        `title`, `url`, `catalogueUrl` (the item's public catalogue page),
+        `image`, `price` in yuan with `currency` CNY, `priceLabel` (Taobao's
+        price tag, e.g. 优惠价), `localPrices` (the same price in the storefront's
+        currency, HKD and TWD), `shopId`, `shopName`, `descriptionMatchScore`,
         `freeShipping`, `categoryId`, `rootCategoryId`, `sellingPoints`,
         `reviewHighlights`), `totalResults` (how many listings Taobao reports),
         and `filterOptions` (brand and property facets; pass an option's
@@ -1646,30 +1657,40 @@ class _PluginMethods:
         """Scrape one Taobao / Tmall item.
 
         Returns one Taobao or Tmall item (by `item_id` or `url`) as JSON:
-        `itemId`, `url`, `platform` (taobao / tmall), `title` (`titleTruncated`
-        when Taobao shortens it, as it does for Tmall items), `price`,
-        `originalPrice` and `priceMax` (for a price range) in yuan with
-        `currency` CNY, `image`, `location` (ships from), `categoryId`,
-        `rootCategoryId`, `categoryPath`, `freeShipping`, `paymentMethods`,
-        `sellableLanguages`, `rating` (positive / neutral / negative split and
-        counts; Taobao items only, Tmall does not publish it), `latestReview`
-        (`rating`, `content`, `date`, `variant`, `hasMedia`, `followUps`; no
-        reviewer identity, so no review photo or video URLs) and `shop`
-        (`shopId`, `name`, `url`, `logo`, `sellerType` B = Tmall / C = Taobao,
-        `creditLevel`, `openedAt`, `itemCount`, `scores` for description,
-        service and delivery). This is what Taobao shows signed-out visitors:
-        variants (SKUs), stock and monthly sales need a Taobao login and are
-        not included. Companion to `/marketplace/taobao-search`. One unit per
-        call.
+        `itemId`, `itemKey` (the item's catalogue key), `url`, `catalogueUrl`,
+        `platform` (taobao / tmall), `title` (`titleTruncated` when Taobao
+        shortens it, as it does for Tmall items), `price`, `originalPrice` and
+        `priceMax` (for a price range) in yuan with `currency` CNY, `image`,
+        `location` (ships from), `categoryId`, `rootCategoryId`,
+        `categoryPath`, `freeShipping`, `paymentMethods`, `sellableLanguages`,
+        `rating` (positive / neutral / negative split and counts; Taobao items
+        only, Tmall does not publish it), `latestReview` (`rating`, `content`,
+        `date`, `variant`, `hasMedia`, `followUps`; no reviewer identity, so no
+        review photo or video URLs) and `shop` (`shopId`, `name`, `url`,
+        `logo`, `sellerType` B = Tmall / C = Taobao, `creditLevel`, `openedAt`,
+        `itemCount`, `scores` for description, service and delivery). This is
+        what Taobao shows signed-out visitors: variants (SKUs), stock and
+        monthly sales need a Taobao login and are not included. Taobao's public
+        catalogue opens an item by its catalogue key (`itemKey` in
+        `/marketplace/taobao-search` results, or the key in a
+        www.taobao.com/list/item/<key>.htm or world.taobao.com/item/<key>.htm
+        link); a numeric id is tried as given and answers 404 when the
+        catalogue does not open it. Companion to `/marketplace/taobao-search`.
+        One unit per call.
 
         Args:
-            item_id: Numeric Taobao or Tmall item id, e.g. '765833709683' (the
-                `id` in item.taobao.com/item.htm?id=...).
-            url: Taobao or Tmall item link, e.g.
-                'https://item.taobao.com/item.htm?id=765833709683' or
-                'https://detail.tmall.com/item.htm?id=1081364414020'
-                (world.taobao.com, mobile and overseas item links work too).
-                Either item_id or url is required.
+            item_id: The item's catalogue key, as `/marketplace/taobao-search`
+                returns it in `itemKey`, e.g.
+                'M3hoaXBUL3N4L2VnVUJncG9JWFphZz09'. A numeric Taobao or Tmall
+                item id (the `id` in item.taobao.com/item.htm?id=...) is tried
+                as given; Taobao's public catalogue opens items by key, so a
+                numeric id may answer 404.
+            url: The item's catalogue link, e.g. 'https://www.taobao.com/list/i
+                tem/M3hoaXBUL3N4L2VnVUJncG9JWFphZz09.htm' or 'https://world.tao
+                bao.com/item/M3hoaXBUL3N4L2VnVUJncG9JWFphZz09.htm' (the links
+                Taobao's own lists and search engines give). An item.taobao.com
+                or detail.tmall.com link is taken by its numeric id, as
+                `item_id` is. Either item_id or url is required.
 
         Calls ``POST /marketplace/taobao-product``.
         """
@@ -5053,13 +5074,14 @@ class _PluginMethods:
 
         Runs the Google Shopping vertical (`udm=28`) for `q` and returns the
         product cards as JSON: `title`, `price`, `currency`, `currencyCode`,
-        `originalPrice`, `discount`, `merchant`, `rating`, `reviewCount` and
-        Google's own ids for the product (`productId`, `catalogId`, `offerId` -
-        stable across searches, for tracking one product). Set
-        `proxy_country`/`gl` to target a market (prices/merchants are region-
-        specific) and `min_price`/`max_price` to filter. One render returns the
-        first page of products (v1). Note: Google Shopping exposes no per-
-        product URL, so `url` is omitted and `image` is best-effort.
+        `originalPrice`, `discount`, `merchant`, `delivery`, `rating`,
+        `reviewCount`, `image` and Google's own ids for the product
+        (`productId`, `catalogId`, `offerId` - stable across searches, for
+        tracking one product). Set `proxy_country`/`gl` to target a market
+        (prices/merchants are region-specific) and `min_price`/`max_price` to
+        filter. One render returns the first page of products (v1). Note:
+        Google Shopping exposes no per-product URL, so `url` is omitted.
+        `image` is the product's thumbnail URL.
 
         Args:
             q: Product search term, e.g. 'wireless headphones'.
@@ -6134,11 +6156,12 @@ class _PluginMethods:
         `area`, `lotSize`, `yearBuilt`, `homeType`, `status`, `description`,
         `priceHistory`, `taxHistory`, `schools`, `facts`, `parking`, listing
         `brokerName`/`listingAgent`, `mlsid`, `monthlyHoaFee`, `pricePerSqft`,
-        `daysOnZillow`, `taxAssessedValue`, coordinates, the `photos` gallery
-        and `virtualTourUrl`. Every field is always present and is `null` when
-        Zillow does not show it for that listing (for-sale and sold pages carry
-        fewer sections than rentals). Companion to the Zillow search plugin
-        (`/realestate/zillow`).
+        `daysOnZillow`, `datePosted`, `pageViewCount` and `favoriteCount` (how
+        many people viewed and saved the listing), `taxAssessedValue`,
+        coordinates, the `photos` gallery and `virtualTourUrl`. Every field is
+        always present and is `null` when Zillow does not show it for that
+        listing (for-sale and sold pages carry fewer sections than rentals).
+        Companion to the Zillow search plugin (`/realestate/zillow`).
 
         Args:
             url: Zillow property URL, e.g.
@@ -7423,9 +7446,12 @@ class _PluginMethods:
         Returns a company's Trustpilot profile and reviews as JSON. `company`
         is the reviewed domain (e.g. `www.nike.com`). The response has a
         `company` summary (`trustScore`, `totalReviews`, `ratingDistribution`
-        1-5, `categories`, `contact`) and a `reviews` array - each with
-        `rating`, `title`, `text`, `verified`, `author` (name, country, review
-        count), `reply` (the company's response) and dates. Page with
+        1-5, `categories`, `contact`) and a `reviews` array - each with `url`,
+        `rating`, `title`, `text`, `verified`, `verificationLevel`,
+        `verificationSource`, `source`, `pending`, `merged`, `author` (name,
+        country, review count, `id`, `image`, `profileUrl`,
+        `reviewsOfThisCompany`), `reply` (the company's response, with dates)
+        and `date` / `experiencedDate` / `updatedDate`. Page with
         `page`/`pages` (20 reviews per page), and filter with `stars`, `sort`
         (recency/relevancy), `language`, `date`, `search`, `verified` or
         `replies`.
@@ -9553,7 +9579,10 @@ class _AsyncPluginMethods:
 
         Searches Walmart for `query` and returns the products as JSON: `name`,
         `price` and `wasPrice`, `rating`, `reviewCount`, `brand`, `seller`,
-        `availability`, `image` and a product `url`. Sort with `sort`, filter
+        `availability`, `image`, a product `url`, `sponsored`, `unitPrice`,
+        `priceRange`, `promotions`, `fulfillment`, `deliveryAvailable` and
+        `variants`. The response also carries the search's `totalResults`,
+        `pages`, `filters` and `sponsoredProducts`. Sort with `sort`, filter
         with `min_price`/`max_price`, and collect up to `max_results` across
         pages.
 
@@ -9598,16 +9627,22 @@ class _AsyncPluginMethods:
         `inStock`, `condition`, `seller` (name, Walmart or marketplace seller,
         its rating and review count), `additionalSellerCount`, `fulfillment`
         (shipping, pickup and delivery: available or not, date, fee, store or
-        place), `returnPolicy`, `rating`, `reviewCount`, `reviewSummary` (star
-        histogram, recommend percentage, aspect scores), the first `reviews`,
-        `categories`, `shortDescription`, `description`, `highlights`,
-        `specifications`, `warranty`, `variantOptions` and every `variants`
-        entry (its own item id, attributes, price, stock), `images` and
-        `videos`. Fulfillment dates and the store are what Walmart quotes for
-        the US location it assigns to the request (`location` names it), not a
-        ZIP code or store you choose. Other sellers' offers are not on the
-        product page: only their count (`additionalSellerCount`) is returned.
-        Companion to `/marketplace/walmart-search`.
+        place), `returnPolicy`, `rating`, `reviewCount`, `totalReviewCount`,
+        `reviewSummary` (star histogram, recommend percentage, aspect scores),
+        `reviewSummaryText`, `reviewBullets`, `reviewTopics`,
+        `topPositiveReview`, `topNegativeReview`, the first `reviews`,
+        `offersCount`, `otherOffersFromPrice`, `otherSellers`, `promotions`,
+        `deliveryAvailable`, `pickupAvailable`, `categories`, `relatedPages`,
+        `colors`, `shortDescription`, `description`, `pageSummary`,
+        `highlights`, `specifications`, `directions`, `ingredients`,
+        `activeIngredients`, `nutritionFacts`, `warranty`, `variantOptions` and
+        every `variants` entry (its own item id, attributes, price, stock),
+        `images`, `videos`, `infographics` and `view360Images`. Fulfillment
+        dates and the store are what Walmart quotes for the US location it
+        assigns to the request (`location` names it), not a ZIP code or store
+        you choose. The product page holds only some of the other sellers'
+        offers (`otherSellers`); `offersCount` is how many there are. Companion
+        to `/marketplace/walmart-search`.
 
         Args:
             item_id: Walmart item id - the number at the end of a product link,
@@ -10825,10 +10860,12 @@ class _AsyncPluginMethods:
         """Scrape Taobao / Tmall keyword or category listings.
 
         Returns the products Taobao lists for a keyword `q` (or a `category`)
-        as JSON: `products` (`position`, `itemId`, `title`, `url`, `image`,
-        `price` in yuan with `currency` CNY, `priceLabel` (Taobao's price tag,
-        e.g. 优惠价), `localPrices` (the same price in the storefront's currency,
-        HKD and TWD), `shopId`, `shopName`, `descriptionMatchScore`,
+        as JSON: `products` (`position`, `itemId`, `itemKey` (the item's
+        catalogue key: pass it to `/marketplace/taobao-product` as `item_id`),
+        `title`, `url`, `catalogueUrl` (the item's public catalogue page),
+        `image`, `price` in yuan with `currency` CNY, `priceLabel` (Taobao's
+        price tag, e.g. 优惠价), `localPrices` (the same price in the storefront's
+        currency, HKD and TWD), `shopId`, `shopName`, `descriptionMatchScore`,
         `freeShipping`, `categoryId`, `rootCategoryId`, `sellingPoints`,
         `reviewHighlights`), `totalResults` (how many listings Taobao reports),
         and `filterOptions` (brand and property facets; pass an option's
@@ -10880,30 +10917,40 @@ class _AsyncPluginMethods:
         """Scrape one Taobao / Tmall item.
 
         Returns one Taobao or Tmall item (by `item_id` or `url`) as JSON:
-        `itemId`, `url`, `platform` (taobao / tmall), `title` (`titleTruncated`
-        when Taobao shortens it, as it does for Tmall items), `price`,
-        `originalPrice` and `priceMax` (for a price range) in yuan with
-        `currency` CNY, `image`, `location` (ships from), `categoryId`,
-        `rootCategoryId`, `categoryPath`, `freeShipping`, `paymentMethods`,
-        `sellableLanguages`, `rating` (positive / neutral / negative split and
-        counts; Taobao items only, Tmall does not publish it), `latestReview`
-        (`rating`, `content`, `date`, `variant`, `hasMedia`, `followUps`; no
-        reviewer identity, so no review photo or video URLs) and `shop`
-        (`shopId`, `name`, `url`, `logo`, `sellerType` B = Tmall / C = Taobao,
-        `creditLevel`, `openedAt`, `itemCount`, `scores` for description,
-        service and delivery). This is what Taobao shows signed-out visitors:
-        variants (SKUs), stock and monthly sales need a Taobao login and are
-        not included. Companion to `/marketplace/taobao-search`. One unit per
-        call.
+        `itemId`, `itemKey` (the item's catalogue key), `url`, `catalogueUrl`,
+        `platform` (taobao / tmall), `title` (`titleTruncated` when Taobao
+        shortens it, as it does for Tmall items), `price`, `originalPrice` and
+        `priceMax` (for a price range) in yuan with `currency` CNY, `image`,
+        `location` (ships from), `categoryId`, `rootCategoryId`,
+        `categoryPath`, `freeShipping`, `paymentMethods`, `sellableLanguages`,
+        `rating` (positive / neutral / negative split and counts; Taobao items
+        only, Tmall does not publish it), `latestReview` (`rating`, `content`,
+        `date`, `variant`, `hasMedia`, `followUps`; no reviewer identity, so no
+        review photo or video URLs) and `shop` (`shopId`, `name`, `url`,
+        `logo`, `sellerType` B = Tmall / C = Taobao, `creditLevel`, `openedAt`,
+        `itemCount`, `scores` for description, service and delivery). This is
+        what Taobao shows signed-out visitors: variants (SKUs), stock and
+        monthly sales need a Taobao login and are not included. Taobao's public
+        catalogue opens an item by its catalogue key (`itemKey` in
+        `/marketplace/taobao-search` results, or the key in a
+        www.taobao.com/list/item/<key>.htm or world.taobao.com/item/<key>.htm
+        link); a numeric id is tried as given and answers 404 when the
+        catalogue does not open it. Companion to `/marketplace/taobao-search`.
+        One unit per call.
 
         Args:
-            item_id: Numeric Taobao or Tmall item id, e.g. '765833709683' (the
-                `id` in item.taobao.com/item.htm?id=...).
-            url: Taobao or Tmall item link, e.g.
-                'https://item.taobao.com/item.htm?id=765833709683' or
-                'https://detail.tmall.com/item.htm?id=1081364414020'
-                (world.taobao.com, mobile and overseas item links work too).
-                Either item_id or url is required.
+            item_id: The item's catalogue key, as `/marketplace/taobao-search`
+                returns it in `itemKey`, e.g.
+                'M3hoaXBUL3N4L2VnVUJncG9JWFphZz09'. A numeric Taobao or Tmall
+                item id (the `id` in item.taobao.com/item.htm?id=...) is tried
+                as given; Taobao's public catalogue opens items by key, so a
+                numeric id may answer 404.
+            url: The item's catalogue link, e.g. 'https://www.taobao.com/list/i
+                tem/M3hoaXBUL3N4L2VnVUJncG9JWFphZz09.htm' or 'https://world.tao
+                bao.com/item/M3hoaXBUL3N4L2VnVUJncG9JWFphZz09.htm' (the links
+                Taobao's own lists and search engines give). An item.taobao.com
+                or detail.tmall.com link is taken by its numeric id, as
+                `item_id` is. Either item_id or url is required.
 
         Calls ``POST /marketplace/taobao-product``.
         """
@@ -14287,13 +14334,14 @@ class _AsyncPluginMethods:
 
         Runs the Google Shopping vertical (`udm=28`) for `q` and returns the
         product cards as JSON: `title`, `price`, `currency`, `currencyCode`,
-        `originalPrice`, `discount`, `merchant`, `rating`, `reviewCount` and
-        Google's own ids for the product (`productId`, `catalogId`, `offerId` -
-        stable across searches, for tracking one product). Set
-        `proxy_country`/`gl` to target a market (prices/merchants are region-
-        specific) and `min_price`/`max_price` to filter. One render returns the
-        first page of products (v1). Note: Google Shopping exposes no per-
-        product URL, so `url` is omitted and `image` is best-effort.
+        `originalPrice`, `discount`, `merchant`, `delivery`, `rating`,
+        `reviewCount`, `image` and Google's own ids for the product
+        (`productId`, `catalogId`, `offerId` - stable across searches, for
+        tracking one product). Set `proxy_country`/`gl` to target a market
+        (prices/merchants are region-specific) and `min_price`/`max_price` to
+        filter. One render returns the first page of products (v1). Note:
+        Google Shopping exposes no per-product URL, so `url` is omitted.
+        `image` is the product's thumbnail URL.
 
         Args:
             q: Product search term, e.g. 'wireless headphones'.
@@ -15368,11 +15416,12 @@ class _AsyncPluginMethods:
         `area`, `lotSize`, `yearBuilt`, `homeType`, `status`, `description`,
         `priceHistory`, `taxHistory`, `schools`, `facts`, `parking`, listing
         `brokerName`/`listingAgent`, `mlsid`, `monthlyHoaFee`, `pricePerSqft`,
-        `daysOnZillow`, `taxAssessedValue`, coordinates, the `photos` gallery
-        and `virtualTourUrl`. Every field is always present and is `null` when
-        Zillow does not show it for that listing (for-sale and sold pages carry
-        fewer sections than rentals). Companion to the Zillow search plugin
-        (`/realestate/zillow`).
+        `daysOnZillow`, `datePosted`, `pageViewCount` and `favoriteCount` (how
+        many people viewed and saved the listing), `taxAssessedValue`,
+        coordinates, the `photos` gallery and `virtualTourUrl`. Every field is
+        always present and is `null` when Zillow does not show it for that
+        listing (for-sale and sold pages carry fewer sections than rentals).
+        Companion to the Zillow search plugin (`/realestate/zillow`).
 
         Args:
             url: Zillow property URL, e.g.
@@ -16657,9 +16706,12 @@ class _AsyncPluginMethods:
         Returns a company's Trustpilot profile and reviews as JSON. `company`
         is the reviewed domain (e.g. `www.nike.com`). The response has a
         `company` summary (`trustScore`, `totalReviews`, `ratingDistribution`
-        1-5, `categories`, `contact`) and a `reviews` array - each with
-        `rating`, `title`, `text`, `verified`, `author` (name, country, review
-        count), `reply` (the company's response) and dates. Page with
+        1-5, `categories`, `contact`) and a `reviews` array - each with `url`,
+        `rating`, `title`, `text`, `verified`, `verificationLevel`,
+        `verificationSource`, `source`, `pending`, `merged`, `author` (name,
+        country, review count, `id`, `image`, `profileUrl`,
+        `reviewsOfThisCompany`), `reply` (the company's response, with dates)
+        and `date` / `experiencedDate` / `updatedDate`. Page with
         `page`/`pages` (20 reviews per page), and filter with `stars`, `sort`
         (recency/relevancy), `language`, `date`, `search`, `verified` or
         `replies`.
