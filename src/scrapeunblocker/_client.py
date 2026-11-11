@@ -369,6 +369,7 @@ class Client(_PluginMethods):
         pages_to_check: int = 1,
         wait_after_load: int = 0,
         captcha_pause: int = 0,
+        full_urls: bool = False,
     ) -> Any:
         """Run a Google search and return the parsed SERP as JSON.
 
@@ -387,6 +388,13 @@ class Client(_PluginMethods):
             pages_to_check: How many result pages to fetch (1-10).
             wait_after_load: Seconds to wait after the page loads.
             captcha_pause: Kept for compatibility; the API ignores it.
+            full_urls: Wait until Google gives out every result's real URL.
+                Google releases a results page's links a few at a time, the
+                last ones up to about 40 seconds after the search. Without
+                this flag the call returns sooner, and a result whose link
+                has not come yet has the site's home page as its ``url`` (or
+                a Google redirect link when Google shows no site). With it,
+                the call takes up to about 40 seconds longer. Billed the same.
         """
         return self._post_json(
             "/serpApi",
@@ -395,6 +403,7 @@ class Client(_PluginMethods):
             pages_to_check=pages_to_check,
             wait_after_load=wait_after_load or None,
             captcha_pause=captcha_pause or None,
+            full_urls=full_urls or None,
         )
 
     def google_local(

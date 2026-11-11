@@ -344,6 +344,35 @@ def test_serp():
     url = str(route.calls.last.request.url)
     assert "keyword=hello" in url
     assert "pages_to_check=2" in url
+    assert "full_urls" not in url
+
+
+@respx.mock
+def test_serp_full_urls():
+    route = respx.post(f"{BASE}/serpApi").mock(
+        return_value=httpx.Response(200, json={"organic": []})
+    )
+    with make_client() as su:
+        su.serp("hello world", full_urls=True)
+        su.serp("hello world", full_urls=False)
+    first = parse_qs(urlparse(str(route.calls[0].request.url)).query)
+    second = parse_qs(urlparse(str(route.calls[1].request.url)).query)
+    assert first["full_urls"] == ["true"]
+    assert "full_urls" not in second
+
+
+@respx.mock
+async def test_async_serp_full_urls():
+    route = respx.post(f"{BASE}/serpApi").mock(
+        return_value=httpx.Response(200, json={"organic": []})
+    )
+    async with AsyncClient(api_key="test-key") as su:
+        await su.serp("hello world", full_urls=True)
+        await su.serp("hello world")
+    first = parse_qs(urlparse(str(route.calls[0].request.url)).query)
+    second = parse_qs(urlparse(str(route.calls[1].request.url)).query)
+    assert first["full_urls"] == ["true"]
+    assert "full_urls" not in second
 
 
 @respx.mock

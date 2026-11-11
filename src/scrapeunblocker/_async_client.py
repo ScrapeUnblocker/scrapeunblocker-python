@@ -274,10 +274,13 @@ class AsyncClient(_AsyncPluginMethods):
         pages_to_check: int = 1,
         wait_after_load: int = 0,
         captcha_pause: int = 0,
+        full_urls: bool = False,
     ) -> Any:
         """Run a Google search and return the parsed SERP as JSON - the same
         result as :meth:`Client.serp` (organic results, ads, AI Overview and
-        the first page's other blocks)."""
+        the first page's other blocks). ``full_urls=True`` waits until Google
+        gives out every result's real URL (up to about 40 seconds longer);
+        see :meth:`Client.serp`."""
         return await self._post_json(
             "/serpApi",
             keyword=keyword,
@@ -285,6 +288,7 @@ class AsyncClient(_AsyncPluginMethods):
             pages_to_check=pages_to_check,
             wait_after_load=wait_after_load or None,
             captcha_pause=captcha_pause or None,
+            full_urls=full_urls or None,
         )
 
     async def google_local(
