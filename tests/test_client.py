@@ -974,3 +974,81 @@ async def test_temu_methods_kept_for_compatibility():
         assert await su.temu_search("phone case") == {"urls": []}
         assert await su.temu_product(product_url) == {"name": "Toy"}
     assert parse_qs(urlparse(str(s.calls.last.request.url)).query) == {"keyword": ["phone case"]}
+
+
+CAPTURED = {
+    "html": "<html>results</html>",
+    "xhr": [
+        {"url": "https://api.example.com/v2/items?page=1", "method": "GET",
+         "status": 200, "content_type": "application/json", "body": "{\"items\": [1, 2]}"},
+        {"url": "https://api.example.com/v2/items?page=2", "method": "GET",
+         "status": 403, "content_type": None, "body": None, "body_omitted": "binary"},
+    ],
+    "xhr_truncated": False,
+    "proxy": "us",
+}
+
+
+@respx.mock
+def test_get_page_with_xhr_returns_the_captured_calls():
+    from scrapeunblocker import CapturedPage, XhrCall
+
+    route = respx.post(f"{BASE}/getPageSource").mock(
+        return_value=httpx.Response(200, json=CAPTURED)
+    )
+    steps = [{"action": "click", "selector": "#more"}]
+    with make_client() as su:
+        page = su.get_page_with_xhr(
+            "https://example.com/search", "/v2/items", steps=steps, proxy_country="us"
+        )
+    assert isinstance(page, CapturedPage)
+    assert page.html == "<html>results</html>"
+    assert page.proxy == "us" and page.xhr_truncated is False
+    first, second = page.xhr
+    assert isinstance(first, XhrCall)
+    assert first.status == 200 and first.json() == {"items": [1, 2]}
+    assert second.body is None and second.body_omitted == "binary"
+    with pytest.raises(ValueError):
+        second.json()
+    query = parse_qs(urlparse(str(route.calls.last.request.url)).query)
+    assert query["capture_xhr"] == ["/v2/items"]
+    assert json.loads(query["steps"][0]) == steps
+    assert "get_cookies" not in query
+
+
+@respx.mock
+def test_step_failure_with_capture_carries_the_calls():
+    body = dict(error="step_failed", step_index=0, action="click", reason="gone",
+                html="<html/>", xhr=CAPTURED["xhr"][:1])
+    respx.post(f"{BASE}/getPageSource").mock(
+        return_value=httpx.Response(422, text=json.dumps(body))
+    )
+    with make_client(max_retries=0) as su:
+        with pytest.raises(StepFailedError) as info:
+            su.get_page_with_xhr("https://example.com", "/v2/items",
+                                 steps=[{"action": "click", "selector": "#x"}])
+    assert [c.url for c in info.value.xhr] == [CAPTURED["xhr"][0]["url"]]
+
+
+@respx.mock
+def test_step_failure_without_capture_has_no_calls():
+    body = dict(error="step_failed", step_index=0, action="click", reason="gone")
+    respx.post(f"{BASE}/getPageSource").mock(
+        return_value=httpx.Response(422, text=json.dumps(body))
+    )
+    with make_client(max_retries=0) as su:
+        with pytest.raises(StepFailedError) as info:
+            su.get_page_source("https://example.com", steps=[{"action": "click", "selector": "#x"}])
+    assert info.value.xhr is None
+
+
+@respx.mock
+async def test_async_get_page_with_xhr():
+    route = respx.post(f"{BASE}/getPageSource").mock(
+        return_value=httpx.Response(200, json=CAPTURED)
+    )
+    async with AsyncClient(api_key="test-key") as su:
+        page = await su.get_page_with_xhr("https://example.com", "/v2/items")
+    assert len(page.xhr) == 2 and page.xhr[0].json() == {"items": [1, 2]}
+    query = parse_qs(urlparse(str(route.calls.last.request.url)).query)
+    assert query == {"url": ["https://example.com"], "capture_xhr": ["/v2/items"]}

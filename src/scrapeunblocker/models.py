@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json as _json
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
@@ -41,6 +42,81 @@ class ParsedPage:
             data_extracted=payload.get("data_extracted") is not False,
             html=payload.get("html"),
             detail=payload.get("detail"),
+        )
+
+
+@dataclass
+class XhrCall:
+    """One XHR/fetch response the page received (``capture_xhr``).
+
+    Attributes:
+        url: The URL the page requested.
+        method: The HTTP method, e.g. ``"GET"``.
+        status: The status the site answered; ``0`` when the request failed
+            without a response.
+        content_type: The response's ``Content-Type``.
+        body: The response body as text, or ``None`` when it was not returned
+            (see ``body_omitted``).
+        body_omitted: Why ``body`` is ``None``: ``"binary"``, ``"size_limit"``,
+            ``"in_flight"``, ``"redirect"``, ``"unavailable"`` or
+            ``"request_failed"``.
+    """
+
+    url: str
+    method: str
+    status: int
+    content_type: Optional[str] = None
+    body: Optional[str] = None
+    body_omitted: Optional[str] = None
+
+    @classmethod
+    def from_dict(cls, item: Dict[str, Any]) -> "XhrCall":
+        return cls(
+            url=item.get("url") or "",
+            method=item.get("method") or "GET",
+            status=int(item.get("status") or 0),
+            content_type=item.get("content_type"),
+            body=item.get("body"),
+            body_omitted=item.get("body_omitted"),
+        )
+
+    def json(self) -> Any:
+        """The body parsed as JSON (raises ``ValueError`` when it is not)."""
+        if self.body is None:
+            raise ValueError(f"no body ({self.body_omitted or 'unavailable'})")
+        return _json.loads(self.body)
+
+
+@dataclass
+class CapturedPage:
+    """A page plus the XHR/fetch responses it received (``capture_xhr``).
+
+    Attributes:
+        html: The rendered page.
+        xhr: The matching responses in the order the page received them.
+        xhr_truncated: ``True`` when more responses matched than were returned.
+        proxy: Country of the exit that served the request.
+        cookies: The cookies set during the visit, when requested
+            (``get_cookies=True``), otherwise ``None``.
+        raw: The full JSON payload as returned by the API.
+    """
+
+    html: Optional[str]
+    xhr: List[XhrCall]
+    xhr_truncated: bool
+    proxy: Optional[str]
+    cookies: Any
+    raw: Dict[str, Any]
+
+    @classmethod
+    def from_response(cls, payload: Dict[str, Any]) -> "CapturedPage":
+        return cls(
+            html=payload.get("html"),
+            xhr=[XhrCall.from_dict(x) for x in payload.get("xhr") or []],
+            xhr_truncated=bool(payload.get("xhr_truncated")),
+            proxy=payload.get("proxy"),
+            cookies=payload.get("cookies"),
+            raw=payload,
         )
 
 

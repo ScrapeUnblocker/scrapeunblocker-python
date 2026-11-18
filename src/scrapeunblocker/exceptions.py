@@ -9,7 +9,7 @@ hand.
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import Any, List, Optional
 
 
 class ScrapeUnblockerError(Exception):
@@ -235,6 +235,9 @@ class StepFailedError(ValidationError):
         selector: The selector the step was acting on, if any.
         html: The page HTML captured at the moment the step failed, useful
             for working out why the selector was not there.
+        xhr: With ``capture_xhr`` (``get_page_with_xhr()``): the
+            :class:`~scrapeunblocker.XhrCall` responses the page received
+            before the step failed; otherwise ``None``.
 
     It derives from :class:`ValidationError` (itself a 422), so existing
     ``except ValidationError`` handlers keep catching it.
@@ -251,6 +254,7 @@ class StepFailedError(ValidationError):
         reason: Optional[str] = None,
         selector: Optional[str] = None,
         html: Optional[str] = None,
+        xhr: Optional[List[Any]] = None,
     ):
         super().__init__(message, status_code=status_code, body=body)
         self.step_index = step_index
@@ -258,6 +262,7 @@ class StepFailedError(ValidationError):
         self.reason = reason
         self.selector = selector
         self.html = html
+        self.xhr = xhr
 
 
 class NoDataExtractedError(ValidationError):

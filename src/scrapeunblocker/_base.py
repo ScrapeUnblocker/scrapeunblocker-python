@@ -36,6 +36,7 @@ from .exceptions import (
     UpstreamOutageError,
     ValidationError,
 )
+from .models import XhrCall
 
 DEFAULT_BASE_URL = "https://api.scrapeunblocker.com"
 DEFAULT_TIMEOUT = 180.0
@@ -216,6 +217,8 @@ def _step_failed_error(body: Optional[str]) -> Optional[StepFailedError]:
         reason=reason,
         selector=data.get("selector"),
         html=data.get("html"),
+        xhr=([XhrCall.from_dict(x) for x in data["xhr"]]
+             if isinstance(data.get("xhr"), list) else None),
     )
 
 

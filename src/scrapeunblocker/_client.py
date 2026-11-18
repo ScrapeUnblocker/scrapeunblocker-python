@@ -12,7 +12,7 @@ from . import _base
 from .exceptions import ConnectionError as SUConnectionError
 from .exceptions import ScrapeTimeoutError
 from ._plugins import _PluginMethods
-from .models import PageResult, ParsedPage
+from .models import CapturedPage, PageResult, ParsedPage
 from .version import __version__
 
 
@@ -360,6 +360,50 @@ class Client(_PluginMethods):
         )
         response = self._request("/getPageSource", params)
         return PageResult.from_response(response.json())
+
+    def get_page_with_xhr(
+        self,
+        url: str,
+        capture_xhr: str,
+        *,
+        steps: Optional[List[Dict[str, Any]]] = None,
+        proxy_country: Optional[str] = None,
+        get_cookies: bool = False,
+    ) -> CapturedPage:
+        """Fetch a URL and return the page's own XHR/fetch responses with it.
+
+        Many sites render from a JSON API the page calls itself, and that API
+        often refuses direct requests (the page signs each call). The page is
+        rendered in a real browser and every XHR/fetch response whose URL
+        contains ``capture_xhr`` comes back in the order the page received
+        it: up to 20 responses and 10 MB of bodies.
+
+        Args:
+            url: The page to fetch.
+            capture_xhr: A fragment of the API URL to capture, e.g.
+                ``"/api/search"`` (plain substring match).
+            steps: Browser actions that make the page fire the call (a search,
+                "load more"); same format as :meth:`get_page_source`.
+            proxy_country: ISO country code to route through.
+            get_cookies: Also return the cookies set during the visit.
+
+        Returns:
+            A :class:`CapturedPage` with ``html``, ``xhr`` (a list of
+            :class:`XhrCall`), ``xhr_truncated`` and ``proxy``.
+
+        Raises:
+            StepFailedError: A step failed (422); its ``xhr`` holds the
+                responses the page received before that.
+        """
+        params = _base.build_params(
+            url=url,
+            capture_xhr=capture_xhr,
+            steps=json.dumps(steps) if steps is not None else None,
+            proxy_country=proxy_country,
+            get_cookies=True if get_cookies else None,
+        )
+        response = self._request("/getPageSource", params)
+        return CapturedPage.from_response(response.json())
 
     def serp(
         self,

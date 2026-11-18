@@ -12,7 +12,7 @@ from . import _base
 from .exceptions import ConnectionError as SUConnectionError
 from .exceptions import ScrapeTimeoutError
 from ._plugins import _AsyncPluginMethods
-from .models import PageResult, ParsedPage
+from .models import CapturedPage, PageResult, ParsedPage
 from .version import __version__
 
 
@@ -265,6 +265,29 @@ class AsyncClient(_AsyncPluginMethods):
         )
         response = await self._request("/getPageSource", params)
         return PageResult.from_response(response.json())
+
+    async def get_page_with_xhr(
+        self,
+        url: str,
+        capture_xhr: str,
+        *,
+        steps: Optional[List[Dict[str, Any]]] = None,
+        proxy_country: Optional[str] = None,
+        get_cookies: bool = False,
+    ) -> CapturedPage:
+        """Fetch a URL and return the page's own XHR/fetch responses with it.
+
+        See :meth:`Client.get_page_with_xhr`.
+        """
+        params = _base.build_params(
+            url=url,
+            capture_xhr=capture_xhr,
+            steps=json.dumps(steps) if steps is not None else None,
+            proxy_country=proxy_country,
+            get_cookies=True if get_cookies else None,
+        )
+        response = await self._request("/getPageSource", params)
+        return CapturedPage.from_response(response.json())
 
     async def serp(
         self,

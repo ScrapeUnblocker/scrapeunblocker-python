@@ -283,6 +283,31 @@ page = su.get_page_with_cookies("https://example.com")
 print(page.html, page.cookies, page.proxy)
 ```
 
+## The page's own API calls (XHR/fetch)
+
+Many sites render from a JSON API the page calls itself, and that API often
+refuses direct requests. `get_page_with_xhr()` renders the page in a real
+browser and returns every XHR/fetch response whose URL contains the fragment
+you pass, in the order the page received them. Add `steps` to make the page
+fire the call (a search, "load more").
+
+```python
+page = su.get_page_with_xhr(
+    "https://quotes.toscrape.com/scroll",
+    "/api/quotes",
+    steps=[{"action": "scroll", "value": "bottom"}, {"action": "wait", "value": 1500}],
+)
+for call in page.xhr:
+    if call.status == 200:
+        print(call.url, call.json()["quotes"][0]["text"])
+```
+
+Each `XhrCall` has `url`, `method`, `status`, `content_type`, `body` (text) and
+`body_omitted` (why there is no body). Up to 20 responses and 10 MB of bodies;
+`page.xhr_truncated` is `True` when more matched. When the site answers every
+matching call with 403 or 429, the request fails like a block
+and is not billed.
+
 ## Images
 
 ```python
