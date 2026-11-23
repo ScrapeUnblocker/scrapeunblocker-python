@@ -12,7 +12,7 @@ from . import _base
 from .exceptions import ConnectionError as SUConnectionError
 from .exceptions import ScrapeTimeoutError
 from ._plugins import _AsyncPluginMethods
-from .models import CapturedPage, PageResult, ParsedPage
+from .models import CapturedPage, PageHeaders, PageResult, ParsedPage
 from .version import __version__
 
 
@@ -265,6 +265,28 @@ class AsyncClient(_AsyncPluginMethods):
         )
         response = await self._request("/getPageSource", params)
         return PageResult.from_response(response.json())
+
+    async def get_page_with_headers(
+        self,
+        url: str,
+        *,
+        get_cookies: bool = False,
+        proxy_country: Optional[str] = None,
+        time_sleep: Optional[int] = None,
+    ) -> PageHeaders:
+        """Fetch a URL and also return the target's status, final URL and headers.
+
+        See :meth:`Client.get_page_with_headers`.
+        """
+        params = _base.build_params(
+            url=url,
+            get_headers=True,
+            get_cookies=True if get_cookies else None,
+            proxy_country=proxy_country,
+            time_sleep=time_sleep,
+        )
+        response = await self._request("/getPageSource", params)
+        return PageHeaders.from_response(response.json())
 
     async def get_page_with_xhr(
         self,

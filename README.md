@@ -283,6 +283,22 @@ page = su.get_page_with_cookies("https://example.com")
 print(page.html, page.cookies, page.proxy)
 ```
 
+## Target status, final URL and headers
+
+```python
+page = su.get_page_with_headers("https://example.com")
+print(page.status_code, page.final_url)   # e.g. 200 https://www.example.com/
+print(page.headers["content-type"])       # response headers, lowercase names
+print(page.headers.get("set-cookie"))     # always a list of strings
+print(page.request_headers["user-agent"]) # the headers sent to the target
+```
+
+`status_code` is the target's own status: a target's 401, 451 or 5xx page comes
+back like any other page, with that status here (a 404 or 410 raises
+`TargetNotFoundError`, see below). `status_code`, `final_url`, `headers`,
+`request_headers` and `proxy` can be `None` when they could not be observed.
+Pass `get_cookies=True` to get `page.cookies` as well.
+
 ## The page's own API calls (XHR/fetch)
 
 Many sites render from a JSON API the page calls itself, and that API often
@@ -412,7 +428,7 @@ except TargetNotFoundError as e:
 
 `TargetNotFoundError` subclasses `NotFoundError`, so `except NotFoundError` catches it too. A 404 without `X-Origin-Status` is the API's own and stays a plain `NotFoundError`.
 
-With `get_parsed()` the body is the parsed-data JSON (`{"data": {"page_type": "not_found", ...}}`), so `html` is `None` there; the raw JSON is on `.body`. With `get_markdown()` the not-found page on `.html` is Markdown.
+With `get_parsed()` the body is the parsed-data JSON (`{"data": {"page_type": "not_found", ...}}`), so `html` is `None` there; the raw JSON is on `.body`. With `get_markdown()` the not-found page on `.html` is Markdown. With `get_page_with_headers()` the not-found page is on `.html` and the full JSON, with the target's headers, on `.body`.
 
 ### No structured data on the page
 

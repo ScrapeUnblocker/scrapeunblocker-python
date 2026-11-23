@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json as _json
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 
 @dataclass
@@ -114,6 +114,55 @@ class CapturedPage:
             html=payload.get("html"),
             xhr=[XhrCall.from_dict(x) for x in payload.get("xhr") or []],
             xhr_truncated=bool(payload.get("xhr_truncated")),
+            proxy=payload.get("proxy"),
+            cookies=payload.get("cookies"),
+            raw=payload,
+        )
+
+
+@dataclass
+class PageHeaders:
+    """A page plus the target's status, final URL and headers (``get_headers=True``).
+
+    Attributes:
+        html: The rendered page.
+        status_code: The status the target answered with, or ``None`` when it
+            could not be observed.
+        final_url: The URL after redirects, or ``None`` when it could not be
+            observed.
+        headers: The target's response headers with lowercase names. A
+            repeated header is joined with ``", "``, except ``set-cookie``,
+            which is always a list of strings. ``None`` when the render path
+            could not observe the headers.
+        request_headers: The headers actually sent to the target (lowercase
+            name -> value), or ``None``.
+        proxy: Country of the exit that served the request (lowercase ISO-2),
+            or ``None``.
+        cookies: The cookies set during the visit, when requested
+            (``get_cookies=True``), otherwise ``None``.
+        raw: The full JSON payload as returned by the API.
+    """
+
+    html: Optional[str]
+    status_code: Optional[int]
+    final_url: Optional[str]
+    headers: Optional[Dict[str, Union[str, List[str]]]]
+    request_headers: Optional[Dict[str, str]]
+    proxy: Optional[str]
+    cookies: Any
+    raw: Dict[str, Any]
+
+    @classmethod
+    def from_response(cls, payload: Dict[str, Any]) -> "PageHeaders":
+        status = payload.get("status_code")
+        headers = payload.get("headers")
+        request_headers = payload.get("request_headers")
+        return cls(
+            html=payload.get("html"),
+            status_code=status if isinstance(status, int) else None,
+            final_url=payload.get("final_url"),
+            headers=headers if isinstance(headers, dict) else None,
+            request_headers=request_headers if isinstance(request_headers, dict) else None,
             proxy=payload.get("proxy"),
             cookies=payload.get("cookies"),
             raw=payload,

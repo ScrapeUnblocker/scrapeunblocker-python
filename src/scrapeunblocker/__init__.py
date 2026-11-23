@@ -38,7 +38,7 @@ from .exceptions import (
     UpstreamOutageError,
     ValidationError,
 )
-from .models import CapturedPage, PageResult, ParsedPage, XhrCall
+from .models import CapturedPage, PageHeaders, PageResult, ParsedPage, XhrCall
 from .version import __version__
 
 __all__ = [
@@ -46,6 +46,7 @@ __all__ = [
     "AsyncClient",
     "ParsedPage",
     "PageResult",
+    "PageHeaders",
     "CapturedPage",
     "XhrCall",
     "ScrapeUnblockerError",

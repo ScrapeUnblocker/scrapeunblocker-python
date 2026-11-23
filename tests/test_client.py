@@ -1052,3 +1052,120 @@ async def test_async_get_page_with_xhr():
     assert len(page.xhr) == 2 and page.xhr[0].json() == {"items": [1, 2]}
     query = parse_qs(urlparse(str(route.calls.last.request.url)).query)
     assert query == {"url": ["https://example.com"], "capture_xhr": ["/v2/items"]}
+
+
+WITH_HEADERS = {
+    "html": "<!DOCTYPE html><html>hi</html>",
+    "status_code": 200,
+    "final_url": "https://www.example.com/",
+    "headers": {
+        "content-type": "text/html",
+        "set-cookie": ["a=1; Path=/", "b=2"],
+        "vary": "Accept, Cookie",
+    },
+    "request_headers": {"user-agent": "Mozilla/5.0", "accept": "text/html"},
+    "proxy": "us",
+}
+
+
+@respx.mock
+def test_get_page_with_headers_returns_status_url_and_headers():
+    from scrapeunblocker import PageHeaders
+
+    route = respx.post(f"{BASE}/getPageSource").mock(
+        return_value=httpx.Response(200, json=WITH_HEADERS)
+    )
+    with make_client() as su:
+        page = su.get_page_with_headers("https://example.com")
+    assert isinstance(page, PageHeaders)
+    assert page.html == "<!DOCTYPE html><html>hi</html>"
+    assert page.status_code == 200
+    assert page.final_url == "https://www.example.com/"
+    assert page.headers["content-type"] == "text/html"
+    assert page.headers["set-cookie"] == ["a=1; Path=/", "b=2"]
+    assert page.headers["vary"] == "Accept, Cookie"
+    assert page.request_headers == {"user-agent": "Mozilla/5.0", "accept": "text/html"}
+    assert page.proxy == "us"
+    assert page.cookies is None
+    assert page.raw == WITH_HEADERS
+    query = parse_qs(urlparse(str(route.calls.last.request.url)).query)
+    assert query == {"url": ["https://example.com"], "get_headers": ["true"]}
+
+
+@respx.mock
+def test_get_page_with_headers_sends_cookies_and_render_options():
+    payload = dict(WITH_HEADERS, cookies=[{"name": "a", "value": "1"}])
+    route = respx.post(f"{BASE}/getPageSource").mock(
+        return_value=httpx.Response(200, json=payload)
+    )
+    with make_client() as su:
+        page = su.get_page_with_headers(
+            "https://example.com", get_cookies=True, proxy_country="US", time_sleep=2
+        )
+    assert page.cookies == [{"name": "a", "value": "1"}]
+    query = parse_qs(urlparse(str(route.calls.last.request.url)).query)
+    assert query["get_headers"] == ["true"]
+    assert query["get_cookies"] == ["true"]
+    assert query["proxy_country"] == ["US"]
+    assert query["time_sleep"] == ["2"]
+
+
+@respx.mock
+def test_get_page_with_headers_when_nothing_was_observed():
+    payload = {
+        "html": "<html>hi</html>",
+        "status_code": None,
+        "final_url": None,
+        "headers": None,
+        "request_headers": None,
+        "proxy": None,
+    }
+    respx.post(f"{BASE}/getPageSource").mock(return_value=httpx.Response(200, json=payload))
+    with make_client() as su:
+        page = su.get_page_with_headers("https://example.com")
+    assert page.html == "<html>hi</html>"
+    assert page.status_code is None and page.final_url is None
+    assert page.headers is None and page.request_headers is None
+    assert page.proxy is None
+
+
+@respx.mock
+def test_get_page_with_headers_returns_a_target_error_page():
+    # A target's own 5xx page is a delivered page: HTTP 200 from the API,
+    # the target's status inside the JSON.
+    payload = dict(WITH_HEADERS, status_code=503)
+    respx.post(f"{BASE}/getPageSource").mock(return_value=httpx.Response(200, json=payload))
+    with make_client() as su:
+        page = su.get_page_with_headers("https://example.com")
+    assert page.status_code == 503
+
+
+@respx.mock
+def test_target_not_found_with_headers_exposes_the_html():
+    body = json.dumps(dict(WITH_HEADERS, status_code=404, html="<html>gone</html>"))
+    respx.post(f"{BASE}/getPageSource").mock(
+        return_value=httpx.Response(404, text=body, headers={"X-Origin-Status": "404"})
+    )
+    with make_client() as su:
+        with pytest.raises(TargetNotFoundError) as info:
+            su.get_page_with_headers("https://example.com/gone")
+    assert info.value.html == "<html>gone</html>"
+    assert info.value.body == body
+    assert json.loads(info.value.body)["headers"]["set-cookie"] == ["a=1; Path=/", "b=2"]
+
+
+@respx.mock
+async def test_async_get_page_with_headers():
+    route = respx.post(f"{BASE}/getPageSource").mock(
+        return_value=httpx.Response(200, json=WITH_HEADERS)
+    )
+    async with AsyncClient(api_key="test-key") as su:
+        page = await su.get_page_with_headers("https://example.com", get_cookies=True)
+    assert page.status_code == 200
+    assert page.headers["set-cookie"] == ["a=1; Path=/", "b=2"]
+    query = parse_qs(urlparse(str(route.calls.last.request.url)).query)
+    assert query == {
+        "url": ["https://example.com"],
+        "get_headers": ["true"],
+        "get_cookies": ["true"],
+    }

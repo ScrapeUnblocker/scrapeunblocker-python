@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.21.0 (2026-11-23)
+
+- New `get_page_with_headers(url, *, get_cookies, proxy_country, time_sleep)` (sync and async) for the API's `get_headers` parameter: the page comes back as a `PageHeaders` with `html`, `status_code` (the target's own status), `final_url` (after redirects), `headers` (the target's response headers with lowercase names; a repeated header is joined with ", ", except `set-cookie`, which is always a list of strings), `request_headers` (the headers sent to the target), `proxy` and the full payload on `raw`. `status_code`, `final_url`, `headers`, `request_headers` and `proxy` are `None` when they could not be observed. `get_cookies=True` adds `cookies`. A target's own 401, 451 or 5xx page is returned with that status in `status_code`; a 404 or 410 raises `TargetNotFoundError` as before, with the full JSON on `.body`.
+
+No breaking changes.
+
 ## 0.20.0 (2026-11-18)
 
 - New `get_page_with_xhr(url, capture_xhr, *, steps, proxy_country)` (sync and async) for the API's `capture_xhr` parameter: the page is rendered in a real browser and every XHR/fetch response whose URL contains the fragment comes back as a `CapturedPage` (`html`, `xhr` - a list of `XhrCall` with `url`, `method`, `status`, `content_type`, `body`, `body_omitted` and a `.json()` helper -, `xhr_truncated`, `proxy`). Useful when a site renders from a JSON API that refuses direct requests.

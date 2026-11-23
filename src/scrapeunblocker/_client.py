@@ -12,7 +12,7 @@ from . import _base
 from .exceptions import ConnectionError as SUConnectionError
 from .exceptions import ScrapeTimeoutError
 from ._plugins import _PluginMethods
-from .models import CapturedPage, PageResult, ParsedPage
+from .models import CapturedPage, PageHeaders, PageResult, ParsedPage
 from .version import __version__
 
 
@@ -360,6 +360,49 @@ class Client(_PluginMethods):
         )
         response = self._request("/getPageSource", params)
         return PageResult.from_response(response.json())
+
+    def get_page_with_headers(
+        self,
+        url: str,
+        *,
+        get_cookies: bool = False,
+        proxy_country: Optional[str] = None,
+        time_sleep: Optional[int] = None,
+    ) -> PageHeaders:
+        """Fetch a URL and also return the target's status, final URL and headers.
+
+        The page is rendered as usual and comes back with the status the
+        target answered with, the URL after redirects, the target's response
+        headers (lowercase names; ``set-cookie`` is always a list) and the
+        headers that were sent to it. A target's own 401, 451 or 5xx page is
+        returned like any other page, with that status in ``status_code``.
+
+        Args:
+            url: The page to fetch.
+            get_cookies: Also return the cookies set during the visit.
+            proxy_country: ISO country code to route through.
+            time_sleep: Extra seconds to wait after load before capture.
+
+        Returns:
+            A :class:`PageHeaders` with ``html``, ``status_code``,
+            ``final_url``, ``headers``, ``request_headers`` and ``proxy``
+            (each can be ``None`` when it could not be observed), plus
+            ``cookies`` when ``get_cookies=True``.
+
+        Raises:
+            TargetNotFoundError: The target page itself answered 404 or 410.
+                The call is billed; the not-found page is on ``.html`` and the
+                full JSON, headers included, on ``.body``.
+        """
+        params = _base.build_params(
+            url=url,
+            get_headers=True,
+            get_cookies=True if get_cookies else None,
+            proxy_country=proxy_country,
+            time_sleep=time_sleep,
+        )
+        response = self._request("/getPageSource", params)
+        return PageHeaders.from_response(response.json())
 
     def get_page_with_xhr(
         self,
