@@ -183,6 +183,7 @@ class Client(_PluginMethods):
         method_timeout: Optional[int] = None,
         steps: Optional[List[Dict[str, Any]]] = None,
         list_elements: bool = False,
+        session: Optional[str] = None,
     ) -> Any:
         """Fetch a URL and return the fully rendered HTML.
 
@@ -219,6 +220,19 @@ class Client(_PluginMethods):
                 interactive/labelled elements on the page instead of HTML -
                 handy for discovering the selectors to drive ``steps``. The
                 method then returns that parsed ``dict`` rather than a string.
+            session: Send calls that pass the same id through the same proxy
+                IP (1-64 letters, digits, ``_``, ``.`` or ``-``; anything else
+                raises :class:`~scrapeunblocker.ValidationError`). The session
+                is private to your API key and expires after 10 minutes
+                without calls. When its IP cannot get the page, the call is
+                answered through another IP and the session moves to it. Up
+                to 4 calls of a session run on its IP at once; more parallel
+                calls are answered through other IPs. A different
+                ``proxy_country`` gets a new IP in that country. This method
+                returns the page only, so it does not say whether the IP
+                changed; the results of :meth:`get_parsed`,
+                :meth:`get_page_with_cookies`, :meth:`get_page_with_headers`
+                and :meth:`get_page_with_xhr` carry ``session_changed``.
 
         Returns:
             The page HTML as a string, or the parsed JSON ``dict`` when
@@ -237,6 +251,7 @@ class Client(_PluginMethods):
             method_timeout=method_timeout,
             steps=json.dumps(steps) if steps is not None else None,
             list_elements=True if list_elements else None,
+            session=session,
         )
         response = self._request("/getPageSource", params)
         if list_elements:
@@ -254,6 +269,7 @@ class Client(_PluginMethods):
         value: Optional[str] = None,
         method_timeout: Optional[int] = None,
         steps: Optional[List[Dict[str, Any]]] = None,
+        session: Optional[str] = None,
     ) -> str:
         """Fetch a URL and return the rendered page as clean Markdown.
 
@@ -277,6 +293,9 @@ class Client(_PluginMethods):
             steps: Browser actions run after the page loads and before it is
                 converted - the same list :meth:`get_page_source` takes. A
                 failed step raises :class:`~scrapeunblocker.StepFailedError`.
+            session: Send calls that pass the same id through the same proxy
+                IP; see :meth:`get_page_source`. The Markdown string does not
+                say whether the IP changed.
 
         Returns:
             The page as a Markdown string.
@@ -296,6 +315,7 @@ class Client(_PluginMethods):
             value=value,
             method_timeout=method_timeout,
             steps=json.dumps(steps) if steps is not None else None,
+            session=session,
         )
         response = self._request("/getPageSource", params)
         return response.text
@@ -308,6 +328,7 @@ class Client(_PluginMethods):
         rules_hint: Optional[str] = None,
         proxy_country: Optional[str] = None,
         time_sleep: Optional[int] = None,
+        session: Optional[str] = None,
     ) -> ParsedPage:
         """Fetch a URL and return structured JSON instead of HTML.
 
@@ -322,6 +343,10 @@ class Client(_PluginMethods):
                 missing"``.
             proxy_country: ISO country code to route through.
             time_sleep: Extra seconds to wait after load before capture.
+            session: Send calls that pass the same id through the same proxy
+                IP; see :meth:`get_page_source`. ``session_changed`` on the
+                result is ``True`` when the call was answered through another
+                IP.
 
         Returns:
             A :class:`ParsedPage` with ``page_type``, ``source`` and ``data``.
@@ -340,9 +365,12 @@ class Client(_PluginMethods):
             rules_hint=rules_hint,
             proxy_country=proxy_country,
             time_sleep=time_sleep,
+            session=session,
         )
         response = self._request("/getPageSource", params)
-        return ParsedPage.from_response(response.json())
+        return ParsedPage.from_response(
+            response.json(), session_changed=_base.session_changed(response)
+        )
 
     def get_page_with_cookies(
         self,
@@ -350,16 +378,33 @@ class Client(_PluginMethods):
         *,
         proxy_country: Optional[str] = None,
         time_sleep: Optional[int] = None,
+        session: Optional[str] = None,
     ) -> PageResult:
-        """Fetch a URL and also return the cookies and proxy that served it."""
+        """Fetch a URL and also return the cookies and proxy that served it.
+
+        Args:
+            url: The page to fetch.
+            proxy_country: ISO country code to route through.
+            time_sleep: Extra seconds to wait after load before capture.
+            session: Send calls that pass the same id through the same proxy
+                IP; see :meth:`get_page_source`. ``session_changed`` on the
+                result is ``True`` when the call was answered through another
+                IP.
+
+        Returns:
+            A :class:`PageResult` with ``html``, ``cookies`` and ``proxy``.
+        """
         params = _base.build_params(
             url=url,
             get_cookies=True,
             proxy_country=proxy_country,
             time_sleep=time_sleep,
+            session=session,
         )
         response = self._request("/getPageSource", params)
-        return PageResult.from_response(response.json())
+        return PageResult.from_response(
+            response.json(), session_changed=_base.session_changed(response)
+        )
 
     def get_page_with_headers(
         self,
@@ -368,6 +413,7 @@ class Client(_PluginMethods):
         get_cookies: bool = False,
         proxy_country: Optional[str] = None,
         time_sleep: Optional[int] = None,
+        session: Optional[str] = None,
     ) -> PageHeaders:
         """Fetch a URL and also return the target's status, final URL and headers.
 
@@ -382,6 +428,10 @@ class Client(_PluginMethods):
             get_cookies: Also return the cookies set during the visit.
             proxy_country: ISO country code to route through.
             time_sleep: Extra seconds to wait after load before capture.
+            session: Send calls that pass the same id through the same proxy
+                IP; see :meth:`get_page_source`. ``session_changed`` on the
+                result is ``True`` when the call was answered through another
+                IP.
 
         Returns:
             A :class:`PageHeaders` with ``html``, ``status_code``,
@@ -400,9 +450,12 @@ class Client(_PluginMethods):
             get_cookies=True if get_cookies else None,
             proxy_country=proxy_country,
             time_sleep=time_sleep,
+            session=session,
         )
         response = self._request("/getPageSource", params)
-        return PageHeaders.from_response(response.json())
+        return PageHeaders.from_response(
+            response.json(), session_changed=_base.session_changed(response)
+        )
 
     def get_page_with_xhr(
         self,
@@ -412,6 +465,7 @@ class Client(_PluginMethods):
         steps: Optional[List[Dict[str, Any]]] = None,
         proxy_country: Optional[str] = None,
         get_cookies: bool = False,
+        session: Optional[str] = None,
     ) -> CapturedPage:
         """Fetch a URL and return the page's own XHR/fetch responses with it.
 
@@ -429,6 +483,10 @@ class Client(_PluginMethods):
                 "load more"); same format as :meth:`get_page_source`.
             proxy_country: ISO country code to route through.
             get_cookies: Also return the cookies set during the visit.
+            session: Send calls that pass the same id through the same proxy
+                IP; see :meth:`get_page_source`. ``session_changed`` on the
+                result is ``True`` when the call was answered through another
+                IP.
 
         Returns:
             A :class:`CapturedPage` with ``html``, ``xhr`` (a list of
@@ -444,9 +502,12 @@ class Client(_PluginMethods):
             steps=json.dumps(steps) if steps is not None else None,
             proxy_country=proxy_country,
             get_cookies=True if get_cookies else None,
+            session=session,
         )
         response = self._request("/getPageSource", params)
-        return CapturedPage.from_response(response.json())
+        return CapturedPage.from_response(
+            response.json(), session_changed=_base.session_changed(response)
+        )
 
     def serp(
         self,

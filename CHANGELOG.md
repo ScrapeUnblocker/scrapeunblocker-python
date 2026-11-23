@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.22.0 (2026-11-23)
+
+- Sticky sessions: `get_page_source`, `get_markdown`, `get_parsed`, `get_page_with_cookies`, `get_page_with_headers` and `get_page_with_xhr` (sync and async) take a new `session` option for the API's `session` parameter. Calls that pass the same id (1-64 letters, digits, `_`, `.` or `-`) leave through the same proxy IP while the session is in use; it expires after 10 minutes without calls and is private to the API key. The parameter is only sent when set, so other requests are unchanged.
+- `ParsedPage`, `PageResult`, `PageHeaders` and `CapturedPage` have a new `session_changed` field, `True` when the API answered through a different IP than the session's (the `X-Session-Changed: true` response header): the session's IP could not get the page, more than 4 calls of the session ran at once, or the call named another `proxy_country`. `get_page_source` and `get_markdown` still return a plain string and do not report it.
+
+No breaking changes.
+
 ## 0.21.0 (2026-11-23)
 
 - New `get_page_with_headers(url, *, get_cookies, proxy_country, time_sleep)` (sync and async) for the API's `get_headers` parameter: the page comes back as a `PageHeaders` with `html`, `status_code` (the target's own status), `final_url` (after redirects), `headers` (the target's response headers with lowercase names; a repeated header is joined with ", ", except `set-cookie`, which is always a list of strings), `request_headers` (the headers sent to the target), `proxy` and the full payload on `raw`. `status_code`, `final_url`, `headers`, `request_headers` and `proxy` are `None` when they could not be observed. `get_cookies=True` adds `cookies`. A target's own 401, 451 or 5xx page is returned with that status in `status_code`; a 404 or 410 raises `TargetNotFoundError` as before, with the full JSON on `.body`.

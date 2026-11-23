@@ -21,6 +21,10 @@ class ParsedPage:
         html: The rendered page when ``data_extracted`` is ``False``,
             otherwise ``None``.
         detail: The API's explanation when ``data_extracted`` is ``False``.
+        session_changed: ``True`` when the call named a ``session`` and was
+            answered through a different IP than the session's (the
+            ``X-Session-Changed: true`` response header). Always ``False``
+            without a ``session``.
     """
 
     page_type: Optional[str]
@@ -30,9 +34,12 @@ class ParsedPage:
     data_extracted: bool = True
     html: Optional[str] = None
     detail: Optional[str] = None
+    session_changed: bool = False
 
     @classmethod
-    def from_response(cls, payload: Dict[str, Any]) -> "ParsedPage":
+    def from_response(
+        cls, payload: Dict[str, Any], *, session_changed: bool = False
+    ) -> "ParsedPage":
         inner = payload.get("data", payload) or {}
         return cls(
             page_type=inner.get("page_type"),
@@ -42,6 +49,7 @@ class ParsedPage:
             data_extracted=payload.get("data_extracted") is not False,
             html=payload.get("html"),
             detail=payload.get("detail"),
+            session_changed=session_changed,
         )
 
 
@@ -99,6 +107,10 @@ class CapturedPage:
         cookies: The cookies set during the visit, when requested
             (``get_cookies=True``), otherwise ``None``.
         raw: The full JSON payload as returned by the API.
+        session_changed: ``True`` when the call named a ``session`` and was
+            answered through a different IP than the session's (the
+            ``X-Session-Changed: true`` response header). Always ``False``
+            without a ``session``.
     """
 
     html: Optional[str]
@@ -107,9 +119,12 @@ class CapturedPage:
     proxy: Optional[str]
     cookies: Any
     raw: Dict[str, Any]
+    session_changed: bool = False
 
     @classmethod
-    def from_response(cls, payload: Dict[str, Any]) -> "CapturedPage":
+    def from_response(
+        cls, payload: Dict[str, Any], *, session_changed: bool = False
+    ) -> "CapturedPage":
         return cls(
             html=payload.get("html"),
             xhr=[XhrCall.from_dict(x) for x in payload.get("xhr") or []],
@@ -117,6 +132,7 @@ class CapturedPage:
             proxy=payload.get("proxy"),
             cookies=payload.get("cookies"),
             raw=payload,
+            session_changed=session_changed,
         )
 
 
@@ -141,6 +157,10 @@ class PageHeaders:
         cookies: The cookies set during the visit, when requested
             (``get_cookies=True``), otherwise ``None``.
         raw: The full JSON payload as returned by the API.
+        session_changed: ``True`` when the call named a ``session`` and was
+            answered through a different IP than the session's (the
+            ``X-Session-Changed: true`` response header). Always ``False``
+            without a ``session``.
     """
 
     html: Optional[str]
@@ -151,9 +171,12 @@ class PageHeaders:
     proxy: Optional[str]
     cookies: Any
     raw: Dict[str, Any]
+    session_changed: bool = False
 
     @classmethod
-    def from_response(cls, payload: Dict[str, Any]) -> "PageHeaders":
+    def from_response(
+        cls, payload: Dict[str, Any], *, session_changed: bool = False
+    ) -> "PageHeaders":
         status = payload.get("status_code")
         headers = payload.get("headers")
         request_headers = payload.get("request_headers")
@@ -166,23 +189,39 @@ class PageHeaders:
             proxy=payload.get("proxy"),
             cookies=payload.get("cookies"),
             raw=payload,
+            session_changed=session_changed,
         )
 
 
 @dataclass
 class PageResult:
-    """HTML plus the cookies and proxy that served it (``get_cookies=True``)."""
+    """HTML plus the cookies and proxy that served it (``get_cookies=True``).
+
+    Attributes:
+        html: The rendered page.
+        cookies: The cookies set during the visit.
+        proxy: The exit that served the request.
+        raw: The full JSON payload as returned by the API.
+        session_changed: ``True`` when the call named a ``session`` and was
+            answered through a different IP than the session's (the
+            ``X-Session-Changed: true`` response header). Always ``False``
+            without a ``session``.
+    """
 
     html: Optional[str]
     cookies: Any
     proxy: Optional[str]
     raw: Dict[str, Any]
+    session_changed: bool = False
 
     @classmethod
-    def from_response(cls, payload: Dict[str, Any]) -> "PageResult":
+    def from_response(
+        cls, payload: Dict[str, Any], *, session_changed: bool = False
+    ) -> "PageResult":
         return cls(
             html=payload.get("html") or payload.get("page_source") or payload.get("content"),
             cookies=payload.get("cookies"),
             proxy=payload.get("proxy") or payload.get("proxy_address"),
             raw=payload,
+            session_changed=session_changed,
         )

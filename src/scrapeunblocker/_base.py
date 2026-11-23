@@ -42,6 +42,7 @@ DEFAULT_BASE_URL = "https://api.scrapeunblocker.com"
 DEFAULT_TIMEOUT = 180.0
 DEFAULT_MAX_RETRIES = 2
 API_KEY_HEADER = "x-scrapeunblocker-key"
+SESSION_CHANGED_HEADER = "x-session-changed"
 
 # Status codes worth retrying: transient upstream outage, rate limiting, and
 # generic 5xx. A 400/401/402/403 is deterministic - retrying only wastes time,
@@ -64,6 +65,15 @@ def resolve_api_key(api_key: Optional[str]) -> str:
 def build_params(**kwargs: Any) -> Dict[str, Any]:
     """Drop None values so optional params are simply omitted from the query."""
     return {k: v for k, v in kwargs.items() if v is not None}
+
+
+def session_changed(response: httpx.Response) -> bool:
+    """True when a ``session`` call was answered through a new IP.
+
+    The API sets ``X-Session-Changed: true`` when the session's IP could not
+    get the page (or was busy) and the session moved to another one.
+    """
+    return response.headers.get(SESSION_CHANGED_HEADER, "").strip().lower() == "true"
 
 
 def user_agent(version: str) -> str:

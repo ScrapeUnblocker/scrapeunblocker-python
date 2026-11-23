@@ -324,6 +324,32 @@ Each `XhrCall` has `url`, `method`, `status`, `content_type`, `body` (text) and
 matching call with 403 or 429, the request fails like a block
 and is not billed.
 
+## Sticky sessions
+
+Pass the same `session` id to keep a run of calls on one proxy IP, e.g. a
+listing page and then its detail pages. Any id of 1-64 letters, digits, `_`,
+`.` or `-` works (anything else raises `ValidationError`); a session is private
+to your API key and expires after 10 minutes without calls. It combines with
+every other option (`proxy_country`, `steps`, `get_cookies`, ...) on every page
+method: `get_page_source`, `get_markdown`, `get_parsed`,
+`get_page_with_cookies`, `get_page_with_headers` and `get_page_with_xhr`.
+
+```python
+first = su.get_page_with_cookies("https://example.com/search?q=shoes", session="run-42")
+detail = su.get_page_with_cookies("https://example.com/item/1", session="run-42")
+if detail.session_changed:
+    print("answered through a new IP; the session now uses it")
+```
+
+When the session's IP cannot get the page, the call is answered through another
+IP and the session moves to it. Up to 4 calls of a session run on its IP at
+once; more parallel calls are answered through other IPs. A call with a
+different `proxy_country` than the session's gets a new IP in that country.
+In each of these cases the result's `session_changed` is `True`. It is on the
+results of `get_parsed`, `get_page_with_cookies`, `get_page_with_headers` and
+`get_page_with_xhr`; `get_page_source` and `get_markdown` return the page as a
+plain string, so they do not report it.
+
 ## Images
 
 ```python

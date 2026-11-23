@@ -162,6 +162,7 @@ class AsyncClient(_AsyncPluginMethods):
         method_timeout: Optional[int] = None,
         steps: Optional[List[Dict[str, Any]]] = None,
         list_elements: bool = False,
+        session: Optional[str] = None,
     ) -> Any:
         """Fetch a URL and return the fully rendered HTML.
 
@@ -171,6 +172,8 @@ class AsyncClient(_AsyncPluginMethods):
         a failed step), and ``list_elements=True`` returns the page's elements
         as a JSON ``dict`` instead of HTML. A target page that answers 404 or
         410 raises :class:`~scrapeunblocker.TargetNotFoundError` (billed).
+        ``session`` sends calls that pass the same id through the same proxy
+        IP; the returned page does not say whether the IP changed.
         """
         params = _base.build_params(
             url=url,
@@ -181,6 +184,7 @@ class AsyncClient(_AsyncPluginMethods):
             method_timeout=method_timeout,
             steps=json.dumps(steps) if steps is not None else None,
             list_elements=True if list_elements else None,
+            session=session,
         )
         response = await self._request("/getPageSource", params)
         if list_elements:
@@ -198,6 +202,7 @@ class AsyncClient(_AsyncPluginMethods):
         value: Optional[str] = None,
         method_timeout: Optional[int] = None,
         steps: Optional[List[Dict[str, Any]]] = None,
+        session: Optional[str] = None,
     ) -> str:
         """Fetch a URL and return the rendered page as clean Markdown.
 
@@ -208,6 +213,7 @@ class AsyncClient(_AsyncPluginMethods):
         sidebars; pass ``False`` for the whole page. A target page that
         answers 404 or 410 raises :class:`~scrapeunblocker.TargetNotFoundError`
         (billed; the not-found page, as Markdown, is on ``.html``).
+        ``session`` works as in :meth:`get_page_source`.
         """
         params = _base.build_params(
             url=url,
@@ -219,6 +225,7 @@ class AsyncClient(_AsyncPluginMethods):
             value=value,
             method_timeout=method_timeout,
             steps=json.dumps(steps) if steps is not None else None,
+            session=session,
         )
         response = await self._request("/getPageSource", params)
         return response.text
@@ -231,12 +238,14 @@ class AsyncClient(_AsyncPluginMethods):
         rules_hint: Optional[str] = None,
         proxy_country: Optional[str] = None,
         time_sleep: Optional[int] = None,
+        session: Optional[str] = None,
     ) -> ParsedPage:
         """Fetch a URL and return structured JSON instead of HTML.
 
         See :meth:`scrapeunblocker.Client.get_parsed`. A page with no
         structured data comes back with ``data_extracted=False`` and the
-        rendered page on ``html``.
+        rendered page on ``html``. With ``session``, ``session_changed`` on the
+        result says whether the call was answered through another IP.
         """
         params = _base.build_params(
             url=url,
@@ -245,9 +254,12 @@ class AsyncClient(_AsyncPluginMethods):
             rules_hint=rules_hint,
             proxy_country=proxy_country,
             time_sleep=time_sleep,
+            session=session,
         )
         response = await self._request("/getPageSource", params)
-        return ParsedPage.from_response(response.json())
+        return ParsedPage.from_response(
+            response.json(), session_changed=_base.session_changed(response)
+        )
 
     async def get_page_with_cookies(
         self,
@@ -255,16 +267,24 @@ class AsyncClient(_AsyncPluginMethods):
         *,
         proxy_country: Optional[str] = None,
         time_sleep: Optional[int] = None,
+        session: Optional[str] = None,
     ) -> PageResult:
-        """Fetch a URL and also return the cookies and proxy that served it."""
+        """Fetch a URL and also return the cookies and proxy that served it.
+
+        See :meth:`scrapeunblocker.Client.get_page_with_cookies` (``session``
+        and ``session_changed`` included).
+        """
         params = _base.build_params(
             url=url,
             get_cookies=True,
             proxy_country=proxy_country,
             time_sleep=time_sleep,
+            session=session,
         )
         response = await self._request("/getPageSource", params)
-        return PageResult.from_response(response.json())
+        return PageResult.from_response(
+            response.json(), session_changed=_base.session_changed(response)
+        )
 
     async def get_page_with_headers(
         self,
@@ -273,10 +293,12 @@ class AsyncClient(_AsyncPluginMethods):
         get_cookies: bool = False,
         proxy_country: Optional[str] = None,
         time_sleep: Optional[int] = None,
+        session: Optional[str] = None,
     ) -> PageHeaders:
         """Fetch a URL and also return the target's status, final URL and headers.
 
-        See :meth:`Client.get_page_with_headers`.
+        See :meth:`Client.get_page_with_headers` (``session`` and
+        ``session_changed`` included).
         """
         params = _base.build_params(
             url=url,
@@ -284,9 +306,12 @@ class AsyncClient(_AsyncPluginMethods):
             get_cookies=True if get_cookies else None,
             proxy_country=proxy_country,
             time_sleep=time_sleep,
+            session=session,
         )
         response = await self._request("/getPageSource", params)
-        return PageHeaders.from_response(response.json())
+        return PageHeaders.from_response(
+            response.json(), session_changed=_base.session_changed(response)
+        )
 
     async def get_page_with_xhr(
         self,
@@ -296,10 +321,12 @@ class AsyncClient(_AsyncPluginMethods):
         steps: Optional[List[Dict[str, Any]]] = None,
         proxy_country: Optional[str] = None,
         get_cookies: bool = False,
+        session: Optional[str] = None,
     ) -> CapturedPage:
         """Fetch a URL and return the page's own XHR/fetch responses with it.
 
-        See :meth:`Client.get_page_with_xhr`.
+        See :meth:`Client.get_page_with_xhr` (``session`` and
+        ``session_changed`` included).
         """
         params = _base.build_params(
             url=url,
@@ -307,9 +334,12 @@ class AsyncClient(_AsyncPluginMethods):
             steps=json.dumps(steps) if steps is not None else None,
             proxy_country=proxy_country,
             get_cookies=True if get_cookies else None,
+            session=session,
         )
         response = await self._request("/getPageSource", params)
-        return CapturedPage.from_response(response.json())
+        return CapturedPage.from_response(
+            response.json(), session_changed=_base.session_changed(response)
+        )
 
     async def serp(
         self,

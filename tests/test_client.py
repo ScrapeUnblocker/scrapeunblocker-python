@@ -1169,3 +1169,88 @@ async def test_async_get_page_with_headers():
         "get_headers": ["true"],
         "get_cookies": ["true"],
     }
+
+
+# -- sticky sessions (session=...) ---------------------------------------------
+
+# (method, positional args, mocked response body); each one calls /getPageSource.
+SESSION_METHODS = [
+    ("get_page_source", ("https://example.com",), None),
+    ("get_markdown", ("https://example.com",), None),
+    ("get_parsed", ("https://example.com",), {"data": {"page_type": "product", "data": {}}}),
+    ("get_page_with_cookies", ("https://example.com",), {"html": "<html>hi</html>"}),
+    ("get_page_with_headers", ("https://example.com",), WITH_HEADERS),
+    ("get_page_with_xhr", ("https://example.com", "/api/"), {"html": "<html>hi</html>"}),
+]
+
+# The methods that return a result object, and so can carry session_changed.
+RESULT_METHODS = [m for m in SESSION_METHODS if m[2] is not None]
+
+
+def _session_response(body, headers=None):
+    if body is None:
+        return httpx.Response(200, text="<html>hi</html>", headers=headers)
+    return httpx.Response(200, json=body, headers=headers)
+
+
+@pytest.mark.parametrize("name,args,body", SESSION_METHODS)
+@respx.mock
+def test_session_is_sent_only_when_given(name, args, body):
+    route = respx.post(f"{BASE}/getPageSource").mock(return_value=_session_response(body))
+    with make_client() as su:
+        getattr(su, name)(*args)
+        assert "session" not in parse_qs(urlparse(str(route.calls.last.request.url)).query)
+        getattr(su, name)(*args, session="cart_1.a-b")
+        query = parse_qs(urlparse(str(route.calls.last.request.url)).query)
+    assert query["session"] == ["cart_1.a-b"]
+    assert query["url"] == ["https://example.com"]
+
+
+@pytest.mark.parametrize("name,args,body", SESSION_METHODS)
+@respx.mock
+async def test_async_session_is_sent_only_when_given(name, args, body):
+    route = respx.post(f"{BASE}/getPageSource").mock(return_value=_session_response(body))
+    async with AsyncClient(api_key="test-key") as su:
+        await getattr(su, name)(*args)
+        assert "session" not in parse_qs(urlparse(str(route.calls.last.request.url)).query)
+        await getattr(su, name)(*args, session="s1")
+        query = parse_qs(urlparse(str(route.calls.last.request.url)).query)
+    assert query["session"] == ["s1"]
+
+
+@pytest.mark.parametrize("name,args,body", RESULT_METHODS)
+@pytest.mark.parametrize(
+    "headers,expected",
+    [
+        ({"X-Session-Changed": "true"}, True),
+        ({"X-Session-Changed": "false"}, False),
+        (None, False),
+    ],
+)
+@respx.mock
+def test_session_changed_reflects_the_header(name, args, body, headers, expected):
+    respx.post(f"{BASE}/getPageSource").mock(return_value=_session_response(body, headers))
+    with make_client() as su:
+        result = getattr(su, name)(*args, session="s1")
+    assert result.session_changed is expected
+
+
+@pytest.mark.parametrize("name,args,body", RESULT_METHODS)
+@respx.mock
+async def test_async_session_changed_reflects_the_header(name, args, body):
+    respx.post(f"{BASE}/getPageSource").mock(
+        return_value=_session_response(body, {"X-Session-Changed": "true"})
+    )
+    async with AsyncClient(api_key="test-key") as su:
+        result = await getattr(su, name)(*args, session="s1")
+    assert result.session_changed is True
+
+
+@respx.mock
+def test_invalid_session_id_raises_validation_error():
+    respx.post(f"{BASE}/getPageSource").mock(
+        return_value=httpx.Response(422, json={"detail": [{"loc": ["query", "session"]}]})
+    )
+    with make_client() as su:
+        with pytest.raises(ValidationError):
+            su.get_page_source("https://example.com", session="no spaces")
